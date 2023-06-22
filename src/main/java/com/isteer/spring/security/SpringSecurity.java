@@ -19,6 +19,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.isteer.jwt.token.AccessDeniedEntryPoint;
+import com.isteer.jwt.token.CustomBearerTokenExceptionEntryPoint;
 import com.isteer.jwt.token.JwtFilter;
 
 @Configuration
@@ -31,6 +33,12 @@ public class SpringSecurity {
 	@Autowired
 	JwtFilter jwtFilter;
 
+	@Autowired
+	CustomBearerTokenExceptionEntryPoint customBearerTokenExceptionEntryPoint;
+
+	@Autowired
+	AccessDeniedEntryPoint accessDeniedEntryPoint;
+
 	@Bean
 	public PasswordEncoder bCryptPasswordEncoder() {
 		return new BCryptPasswordEncoder();
@@ -39,15 +47,16 @@ public class SpringSecurity {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
 		httpSecurity.cors((cors) -> cors.disable());
-		httpSecurity.csrf((csr) -> csr.disable())
-				.authorizeHttpRequests((request) -> request.requestMatchers("/authenticate", "/addUser").permitAll()
-						.requestMatchers("/grandPermissions").hasAuthority("ADMIN")
-						.requestMatchers("/updateUser").hasAnyAuthority("canUpdate", "ADMIN")
-						.requestMatchers("/deleteuserbyid/{userId}").hasAnyAuthority("canDelete", "ADMIN")
-						.requestMatchers("/getalluser").hasAnyAuthority("canGetAll", "ADMIN")
-						.requestMatchers("/getuserbyid/{userId}").hasAnyAuthority("canGetOne", "ADMIN")
-						.requestMatchers("/getaddressbyuserId/{userId}","/getaddressbyuserIdandaddressId/{userId}/{addressId}").hasAnyAuthority("ADMIN","canGetAddress")
-						.anyRequest().authenticated())
+		httpSecurity.csrf((csr) -> csr.disable()).authorizeHttpRequests((request) -> request
+				.requestMatchers("/authenticate", "/addUser").permitAll().requestMatchers("/grandPermissions")
+				.hasAuthority("ADMIN").requestMatchers("/updateUser").hasAnyAuthority("canUpdate", "ADMIN")
+				.requestMatchers("/deleteuserbyid/{userId}").hasAnyAuthority("canDelete", "ADMIN")
+				.requestMatchers("/getalluser").hasAnyAuthority("canGetAll", "ADMIN")
+				.requestMatchers("/getuserbyid/{userId}").hasAnyAuthority("canGetOne", "ADMIN")
+				.requestMatchers("/getaddressbyuserId/{userId}", "/getaddressbyuserIdandaddressId/{userId}/{addressId}")
+				.hasAnyAuthority("ADMIN", "canGetAddress").anyRequest().authenticated())
+				.exceptionHandling((exp) -> exp.authenticationEntryPoint(customBearerTokenExceptionEntryPoint)
+						.accessDeniedHandler(accessDeniedEntryPoint))
 				.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 		httpSecurity.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
