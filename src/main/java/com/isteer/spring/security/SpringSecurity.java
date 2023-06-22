@@ -24,50 +24,49 @@ import com.isteer.jwt.token.JwtFilter;
 @Configuration
 @EnableWebSecurity
 public class SpringSecurity {
-	
+
 	@Autowired
 	UserDetailsService userDetailsService;
-	
+
 	@Autowired
 	JwtFilter jwtFilter;
-	
+
 	@Bean
-	public PasswordEncoder bCryptPasswordEncoder()
-	{
+	public PasswordEncoder bCryptPasswordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-	
-	
-	
+
 	@Bean
-	public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception
-	{
-		httpSecurity.csrf((csr)->csr.disable()).
-		authorizeHttpRequests((request)->request.requestMatchers("/authenticate","/addUser").permitAll()
-				
-				.requestMatchers("/updateUser","/deleteuserbyid/{userId}","/getuserbyid/{userId}","/getalluser").hasAuthority("ADMIN")
-				.anyRequest().authenticated()).sessionManagement((session)->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+	public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+		httpSecurity.cors((cors) -> cors.disable());
+		httpSecurity.csrf((csr) -> csr.disable())
+				.authorizeHttpRequests((request) -> request.requestMatchers("/authenticate", "/addUser").permitAll()
+						.requestMatchers("/grandPermissions").hasAuthority("ADMIN")
+						.requestMatchers("/updateUser").hasAnyAuthority("canUpdate", "ADMIN")
+						.requestMatchers("/deleteuserbyid/{userId}").hasAnyAuthority("canDelete", "ADMIN")
+						.requestMatchers("/getalluser").hasAnyAuthority("canGetAll", "ADMIN")
+						.requestMatchers("/getuserbyid/{userId}").hasAnyAuthority("canGetOne", "ADMIN")
+						.requestMatchers("/getaddressbyuserId/{userId}","/getaddressbyuserIdandaddressId/{userId}/{addressId}").hasAnyAuthority("ADMIN","canGetAddress")
+						.anyRequest().authenticated())
+				.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 		httpSecurity.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-		httpSecurity.httpBasic(Customizer.withDefaults());
+
 		return httpSecurity.build();
-		
-		
+
 	}
+
 	@Bean
-	public AuthenticationProvider authenticationProvider( PasswordEncoder passwordEncoder)
-	{
-		
-		DaoAuthenticationProvider provider=new DaoAuthenticationProvider();
+	public AuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
+
+		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
 		provider.setUserDetailsService(userDetailsService);
 		provider.setPasswordEncoder(passwordEncoder);
 		return provider;
-		
-		
+
 	}
-	
+
 	@Bean
-	public AuthenticationManager authenticationManager( AuthenticationConfiguration configuration) throws Exception
-	{
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
 		return configuration.getAuthenticationManager();
 	}
 

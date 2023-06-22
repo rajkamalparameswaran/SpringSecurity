@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 public class User {
 	
+	
 	private int userId;
 	private String userName;
 	private String userFullName;
@@ -16,14 +17,14 @@ public class User {
 	private String userPassword;
 	private List<String> userAddresses;
 	private List<String> userRoles;
-	private String isAccountNonExpired;
-	private String isAccountNonLocked;
-	private String isCredentialsNonExpired;
-	private String isEnabled;
-	
+	private List<String> privileges;
+	private boolean isAccountNonExpired;
+	private boolean isAccountNonLocked;
+	private boolean isCredentialsNonExpired;
+	private boolean isEnabled;
 	public User(int userId, String userName, String userFullName, String userEmail, String userPassword,
-			List<String> userAddresses, List<String> userRoles, String isAccountNonExpired, String isAccountNonLocked,
-			String isCredentialsNonExpired, String isEnabled) {
+			List<String> userAddresses, List<String> userRoles, List<String> privileges, boolean isAccountNonExpired,
+			boolean isAccountNonLocked, boolean isCredentialsNonExpired, boolean isEnabled) {
 		super();
 		this.userId = userId;
 		this.userName = userName;
@@ -32,49 +33,17 @@ public class User {
 		this.userPassword = userPassword;
 		this.userAddresses = userAddresses;
 		this.userRoles = userRoles;
+		this.privileges = privileges;
 		this.isAccountNonExpired = isAccountNonExpired;
 		this.isAccountNonLocked = isAccountNonLocked;
 		this.isCredentialsNonExpired = isCredentialsNonExpired;
 		this.isEnabled = isEnabled;
 	}
-	public String getIsAccountNonExpired() {
-		return isAccountNonExpired;
-	}
-	public void setIsAccountNonExpired(String isAccountNonExpired) {
-		this.isAccountNonExpired = isAccountNonExpired;
-	}
-	public String getIsAccountNonLocked() {
-		return isAccountNonLocked;
-	}
-	public void setIsAccountNonLocked(String isAccountNonLocked) {
-		this.isAccountNonLocked = isAccountNonLocked;
-	}
-	public String getIsCredentialsNonExpired() {
-		return isCredentialsNonExpired;
-	}
-	public void setIsCredentialsNonExpired(String isCredentialsNonExpired) {
-		this.isCredentialsNonExpired = isCredentialsNonExpired;
-	}
-	public String getIsEnabled() {
-		return isEnabled;
-	}
-	public void setIsEnabled(String isEnabled) {
-		this.isEnabled = isEnabled;
-	}
+	
 	public User() {
 		super();
 	}
-	public User(int userId, String userName, String userFullName, String userEmail, String userPassword,
-			List<String> userAddresses, List<String> userRoles) {
-		super();
-		this.userId = userId;
-		this.userName = userName;
-		this.userFullName = userFullName;
-		this.userEmail = userEmail;
-		this.userPassword = userPassword;
-		this.userAddresses = userAddresses;
-		this.userRoles = userRoles;
-	}
+
 	public int getUserId() {
 		return userId;
 	}
@@ -116,6 +85,36 @@ public class User {
 	}
 	public void setUserRoles(List<String> userRoles) {
 		this.userRoles = userRoles;
+	}
+	public List<String> getPrivileges() {
+		return privileges;
+	}
+	public void setPrivileges(List<String> privileges) {
+		this.privileges = privileges;
+	}
+	public boolean isAccountNonExpired() {
+		return isAccountNonExpired;
+	}
+	public void setAccountNonExpired(boolean isAccountNonExpired) {
+		this.isAccountNonExpired = isAccountNonExpired;
+	}
+	public boolean isAccountNonLocked() {
+		return isAccountNonLocked;
+	}
+	public void setAccountNonLocked(boolean isAccountNonLocked) {
+		this.isAccountNonLocked = isAccountNonLocked;
+	}
+	public boolean isCredentialsNonExpired() {
+		return isCredentialsNonExpired;
+	}
+	public void setCredentialsNonExpired(boolean isCredentialsNonExpired) {
+		this.isCredentialsNonExpired = isCredentialsNonExpired;
+	}
+	public boolean isEnabled() {
+		return isEnabled;
+	}
+	public void setEnabled(boolean isEnabled) {
+		this.isEnabled = isEnabled;
 	}
 	
 	

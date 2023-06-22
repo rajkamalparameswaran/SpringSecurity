@@ -12,7 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.isteer.module.User;
 
 public class Principles implements UserDetails {
-	
+
 	private User user;
 
 	public Principles(User user) {
@@ -20,61 +20,63 @@ public class Principles implements UserDetails {
 		this.user = user;
 	}
 
-	
-
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		List<String> roles=user.getUserRoles();
-		List<SimpleGrantedAuthority> list=new ArrayList<>();
-		for(String role:roles)
-		{
-			list.add(new SimpleGrantedAuthority(role));
+		List<String> roles = user.getUserRoles();
+		List<String> privileges = user.getPrivileges();
+		List<GrantedAuthority> list = new ArrayList<>();
+
+		for (String privilege : privileges) {
+
+			list.add(new SimpleGrantedAuthority(privilege));
 		}
+		for (String role : roles) {
+
+			list.add(new SimpleGrantedAuthority(role));
+
+		}
+
 		return list;
+
 	}
 
 	@Override
 	public String getPassword() {
-		
+
 		return user.getUserPassword();
 	}
 
 	@Override
 	public String getUsername() {
-		
+
 		return user.getUserName();
 	}
 
 	@Override
 	public boolean isAccountNonExpired() {
-		String isAccountNonExpired="true";
-		
-		return isAccountNonExpired.equalsIgnoreCase(user.getIsAccountNonExpired());
-		
+
+		return user.isAccountNonExpired();
+
 	}
 
 	@Override
 	public boolean isAccountNonLocked() {
-       String isAccountNonLocked="true";
 
-		
-		return isAccountNonLocked.equalsIgnoreCase(user.getIsAccountNonLocked());
-		
+		return user.isAccountNonLocked();
 	}
 
 	@Override
 	public boolean isCredentialsNonExpired() {
-		String isCredentialsNonExpired="true";
-		return isCredentialsNonExpired.equalsIgnoreCase(user.getIsCredentialsNonExpired());
-		
+
+		return user.isCredentialsNonExpired();
+
 	}
 
 	@Override
 	public boolean isEnabled() {
-		String isEnabled="true";
-		
-		return isEnabled.equalsIgnoreCase(user.getIsEnabled());
-		
+
+		return user.isEnabled();
+
 	}
 
 }

@@ -16,21 +16,23 @@ import com.isteer.module.User;
 import com.isteer.services.UserService;
 
 @Service
-@Transactional
 public class UserServiceImpl implements UserService {
 
 	@Autowired
 	UserDao userDao;
 
 	@Override
+	@Transactional
 	public UserResponse addUser(User user) {
 
 		List<String> exceptions = new ArrayList<String>();
 		if ((user.getUserName() == null) || (user.getUserFullName() == null) || (user.getUserEmail() == null)
-				|| (user.getUserPassword() == null)||(user.getUserAddresses()==null)||(user.getUserRoles()==null)) {
+				|| (user.getUserPassword() == null) || (user.getUserAddresses() == null)
+				|| (user.getUserRoles() == null)) {
 			exceptions.add("Please provide valid data");
 
 		} else {
+
 			if (user.getUserAddresses().isEmpty()) {
 				exceptions.add("User address cannot be empty");
 
@@ -60,6 +62,9 @@ public class UserServiceImpl implements UserService {
 				user.setUserId(userId);
 				userDao.addAddresses(user.getUserAddresses(), userId);
 				userDao.addRoles(user.getUserRoles(), userId);
+
+				userDao.addPrivileges(userId);
+
 				ReturnUser returnUser = new ReturnUser(userId, user.getUserName(), user.getUserFullName(),
 						user.getUserEmail(), user.getUserPassword(), user.getUserAddresses(), user.getUserRoles());
 
@@ -80,6 +85,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	@Transactional
 	public AlternativeReturnUser updateUser(User user) {
 
 		if (!userDao.isIdFound(user.getUserId())) {
@@ -89,10 +95,10 @@ public class UserServiceImpl implements UserService {
 		} else {
 			List<String> exceptions = new ArrayList<String>();
 
-			if ((user.getIsAccountNonExpired() == null) || (user.getIsAccountNonLocked() == null)
-					|| (user.getIsCredentialsNonExpired() == null) || (user.getIsEnabled() == null)
-					|| (user.getUserId() == 0) || (user.getUserName() == null) || (user.getUserFullName() == null)
-					|| (user.getUserEmail() == null) || (user.getUserPassword() == null)||(user.getUserAddresses()==null)||user.getUserRoles()==null) {
+			if ((user.getUserId() == 0) || (user.getUserName() == null) || (user.getUserFullName() == null)
+					|| (user.getUserEmail() == null) || (user.getUserPassword() == null)
+					|| (user.getUserAddresses() == null) || (user.getUserRoles() == null)
+					|| user.getPrivileges() == null) {
 				exceptions.add("Please provide valid data");
 
 			} else {
@@ -116,15 +122,23 @@ public class UserServiceImpl implements UserService {
 					exceptions.add("User roles cannot be empty");
 
 				}
+				if (user.getPrivileges().isEmpty()) {
+
+					exceptions.add("User privileges cannot be empty give no privilege");
+
+				}
+
 			}
 
 			if (exceptions.isEmpty()) {
 				try {
 					userDao.deleteRolesById(user.getUserId());
 					userDao.deleteAddressById(user.getUserId());
+					userDao.deletePrivilegesById(user.getUserId());
 					userDao.updateUser(user);
 					userDao.addAddresses(user.getUserAddresses(), user.getUserId());
 					userDao.addRoles(user.getUserRoles(), user.getUserId());
+					userDao.addPrivileges(user.getPrivileges(), user.getUserId());
 
 					ReturnUser returnUser = new ReturnUser(user.getUserId(), user.getUserName(), user.getUserFullName(),
 							user.getUserEmail(), user.getUserPassword(), user.getUserAddresses(), user.getUserRoles());
@@ -148,6 +162,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	@Transactional
 	public UserResponse deleteUserById(Integer userId) {
 		if (!userDao.isIdFound(userId)) {
 			List<String> exception = new ArrayList<>();
@@ -155,8 +170,9 @@ public class UserServiceImpl implements UserService {
 			throw new UserIdNotFoundException(0, "data deleted failed", exception);
 		} else {
 			userDao.deleteRolesById(userId);
-			userDao.deleteRolesById(userId);
 			userDao.deleteAddressById(userId);
+			userDao.deletePrivilegesById(userId);
+			userDao.deleteUserById(userId);
 
 			return new UserResponse(1, "Data deleted sucessfully", new ReturnUser());
 		}
@@ -187,14 +203,93 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public User getUserByUserName(String userName) {
-		
+
 		return userDao.getUserByUserName(userName);
 	}
 
 	@Override
 	public boolean isIdFound(Integer userId) {
-		
+
 		return userDao.isIdFound(userId);
+	}
+
+	@Override
+	public String grantPermission(User user) {
+
+		if (!userDao.isIdFound(user.getUserId())) {
+			List<String> exception = new ArrayList<>();
+			exception.add("User Id not found");
+			throw new UserIdNotFoundException(0, "data fetched failed", exception);
+		} else {
+
+			userDao.deletePrivilegesById(user.getUserId());
+			userDao.addPrivileges(user.getPrivileges(), user.getUserId());
+
+			return "Permission Granted sucessfully";
+
+		}
+
+	}
+
+	@Override
+	public AddressesResponse getAddressByUserId(Integer userId) {
+		List<String> exception = new ArrayList<>();
+		
+
+		if (userDao.isIdFound(userId) == false) {
+			exception.add("User Id Not Found");
+			throw new UserIdNotFoundException(0, "Cannot do process", exception);
+		} 
+			
+		
+
+		try {
+
+			List<String> addresses = userDao.getAddressByUserId(userId);
+
+			return new AddressesResponse(1, "Sucess", addresses);
+
+		} catch (Exception e) {
+
+			exception.add(e.getMessage());
+			throw new SqlQueryException(0, "Cannot do process", exception);
+
+		}
+
+	}
+
+	@Override
+	public AddressResponse getAddressByUserIdAndAddressId(Integer userId, Integer addressId) {
+		
+		List<String> exception = new ArrayList<>();
+
+		if (userDao.isIdFound(userId) == false) {
+			exception.add("User Id Not Found");
+		}
+		
+		if(userDao.addressIdFounder(addressId)==null)
+		{
+			exception.add("Address Id Not Found");
+		}
+		
+		if(!exception.isEmpty())
+		{
+			throw new UserIdNotFoundException(0, "Cannot do process", exception);
+		}
+		
+		try {
+			
+			String address=userDao.getAddressByUserIdAndAddressId(userId, addressId);
+			
+			return new AddressResponse(1, "Sucess", address);
+			
+		} catch (Exception e) {
+			exception.add(e.getMessage());
+			throw new SqlQueryException(0, "Cannot do process", exception);
+		}
+			
+		
+		
 	}
 
 }

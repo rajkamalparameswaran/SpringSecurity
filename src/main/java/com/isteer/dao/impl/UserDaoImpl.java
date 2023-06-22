@@ -28,9 +28,6 @@ import com.isteer.sql.queries.SqlQueries;
 
 @Repository
 public class UserDaoImpl implements UserDao {
-	
-	
-
 
 	@Autowired
 	JdbcTemplate jdbcTemplate;
@@ -60,7 +57,7 @@ public class UserDaoImpl implements UserDao {
 	public Integer addUser(User user) {
 
 		KeyHolder holder = new GeneratedKeyHolder();
-		user.setUserPassword(new BCryptPasswordEncoder() .encode(user.getUserPassword()));
+		user.setUserPassword(new BCryptPasswordEncoder().encode(user.getUserPassword()));
 
 		jdbcTemplate.update(con -> {
 			PreparedStatement ps = con.prepareStatement(SqlQueries.ADD_USER, PreparedStatement.RETURN_GENERATED_KEYS);
@@ -68,7 +65,7 @@ public class UserDaoImpl implements UserDao {
 			ps.setString(2, user.getUserFullName());
 			ps.setString(3, user.getUserEmail());
 			ps.setString(4, user.getUserPassword());
-			
+
 			return ps;
 		}, holder);
 
@@ -120,12 +117,35 @@ public class UserDaoImpl implements UserDao {
 	}
 
 	@Override
+	public void addPrivileges(List<String> userPrivileges, Integer userId) {
+
+		jdbcTemplate.batchUpdate(SqlQueries.INSERT_PRIVILEGES, new BatchPreparedStatementSetter() {
+
+			@Override
+			public void setValues(PreparedStatement ps, int i) throws SQLException {
+
+				ps.setInt(1, userId);
+				ps.setString(2, userPrivileges.get(i));
+
+			}
+
+			@Override
+			public int getBatchSize() {
+
+				return userPrivileges.size();
+			}
+		});
+
+	}
+
+	@Override
 	public void updateUser(User user) {
 
 		user.setUserPassword(new BCryptPasswordEncoder().encode(user.getUserPassword()));
 
-		jdbcTemplate.update(SqlQueries.UPDATE_USER_BY_ADMIN, user.getUserName(), user.getUserFullName(), user.getUserEmail(),
-				user.getUserPassword(),user.getIsAccountNonExpired(),user.getIsAccountNonLocked(),user.getIsCredentialsNonExpired(),user.getIsEnabled(), user.getUserId());
+		jdbcTemplate.update(SqlQueries.UPDATE_USER_BY_ADMIN, user.getUserName(), user.getUserFullName(),
+				user.getUserEmail(), user.getUserPassword(), user.isAccountNonExpired(), user.isAccountNonLocked(),
+				user.isCredentialsNonExpired(), user.isEnabled(), user.getUserId());
 
 	}
 
@@ -150,6 +170,12 @@ public class UserDaoImpl implements UserDao {
 	}
 
 	@Override
+	public void deletePrivilegesById(Integer userId) {
+		jdbcTemplate.update(SqlQueries.DELETE_PRIVILEGES, userId);
+
+	}
+
+	@Override
 	public User getUserById(Integer userId) {
 
 		User user = jdbcTemplate.query(SqlQueries.GET_USER_BY_ID, new ResultSetExtractor<User>() {
@@ -163,34 +189,52 @@ public class UserDaoImpl implements UserDao {
 					user.setUserFullName(rs.getString("userFullName"));
 					user.setUserEmail(rs.getString("userEmail"));
 					user.setUserPassword(rs.getString("userPassword"));
-					user.setIsAccountNonExpired(rs.getString("isAccountNonExpired"));
-					user.setIsAccountNonLocked(rs.getString("isAccountNonLocked"));
-					user.setIsCredentialsNonExpired("isCredentialsNonExpired");
-					user.setIsEnabled(rs.getString("isEnabled"));
+					user.setAccountNonExpired(rs.getBoolean("isAccountNonExpired"));
+					user.setAccountNonLocked(rs.getBoolean("isAccountNonLocked"));
+					user.setCredentialsNonExpired(rs.getBoolean("isCredentialsNonExpired"));
+					user.setEnabled(rs.getBoolean("isEnabled"));
 					List<String> addresses = new ArrayList<String>();
 					List<String> authorities = new ArrayList<>();
-					addresses=jdbcTemplate.query(SqlQueries.GET_ADDRESS_BY_ID, new ResultSetExtractor<List<String>>() {
+					List<String> privilege = new ArrayList<>();
+					addresses = jdbcTemplate.query(SqlQueries.GET_ADDRESS_BY_ID,
+							new ResultSetExtractor<List<String>>() {
 
-						@Override
-						public List<String> extractData(ResultSet rs) throws SQLException, DataAccessException {
-							List<String> addresse = new ArrayList<String>();
-							while (rs.next()) {
-								addresse.add(rs.getString("address"));
+								@Override
+								public List<String> extractData(ResultSet rs) throws SQLException, DataAccessException {
+									List<String> addresse = new ArrayList<String>();
+									while (rs.next()) {
+										addresse.add(rs.getString("address"));
 
-							}
+									}
 
-							return addresse;
-						}
+									return addresse;
+								}
 
-					}, userId);
+							}, userId);
 
-					authorities=	jdbcTemplate.query(SqlQueries.GET_ROLES_BY_ID, new ResultSetExtractor<List<String>>() {
+					authorities = jdbcTemplate.query(SqlQueries.GET_ROLES_BY_ID,
+							new ResultSetExtractor<List<String>>() {
+
+								@Override
+								public List<String> extractData(ResultSet rs) throws SQLException, DataAccessException {
+									List<String> authoritie = new ArrayList<>();
+									while (rs.next()) {
+										authoritie.add(rs.getString("role"));
+
+									}
+
+									return authoritie;
+								}
+
+							}, userId);
+
+					privilege = jdbcTemplate.query(SqlQueries.GET_PRIVILEGES, new ResultSetExtractor<List<String>>() {
 
 						@Override
 						public List<String> extractData(ResultSet rs) throws SQLException, DataAccessException {
 							List<String> authoritie = new ArrayList<>();
 							while (rs.next()) {
-								authoritie.add(rs.getString("role"));
+								authoritie.add(rs.getString("privilege"));
 
 							}
 
@@ -198,8 +242,10 @@ public class UserDaoImpl implements UserDao {
 						}
 
 					}, userId);
+
 					user.setUserAddresses(addresses);
 					user.setUserRoles(authorities);
+					user.setPrivileges(privilege);
 
 				}
 				return user;
@@ -230,41 +276,63 @@ public class UserDaoImpl implements UserDao {
 					user.setUserFullName(rs.getString("userFullName"));
 					user.setUserEmail(rs.getString("userEmail"));
 					user.setUserPassword(rs.getString("userPassword"));
-					user.setIsAccountNonExpired(rs.getString("isAccountNonExpired"));
-					user.setIsAccountNonLocked(rs.getString("isAccountNonLocked"));
-					user.setIsCredentialsNonExpired(rs.getString("isCredentialsNonExpired"));
-					user.setIsEnabled(rs.getString("isEnabled"));
+					user.setAccountNonExpired(rs.getBoolean("isAccountNonExpired"));
+					user.setAccountNonLocked(rs.getBoolean("isAccountNonLocked"));
+					user.setCredentialsNonExpired(rs.getBoolean("isCredentialsNonExpired"));
+					user.setEnabled(rs.getBoolean("isEnabled"));
 					List<String> addresses = new ArrayList<String>();
 					List<String> authorities = new ArrayList<>();
-					jdbcTemplate.query(SqlQueries.GET_ADDRESS_BY_ID, new ResultSetExtractor<>() {
+					List<String> privilege = new ArrayList<>();
+					addresses = jdbcTemplate.query(SqlQueries.GET_ADDRESS_BY_ID,
+							new ResultSetExtractor<List<String>>() {
+
+								@Override
+								public List<String> extractData(ResultSet rs) throws SQLException, DataAccessException {
+									List<String> addresse = new ArrayList<String>();
+									while (rs.next()) {
+										addresse.add(rs.getString("address"));
+
+									}
+
+									return addresse;
+								}
+
+							}, user.getUserId());
+
+					authorities = jdbcTemplate.query(SqlQueries.GET_ROLES_BY_ID,
+							new ResultSetExtractor<List<String>>() {
+
+								@Override
+								public List<String> extractData(ResultSet rs) throws SQLException, DataAccessException {
+									List<String> authoritie = new ArrayList<>();
+									while (rs.next()) {
+										authoritie.add(rs.getString("role"));
+
+									}
+
+									return authoritie;
+								}
+
+							}, user.getUserId());
+
+					privilege = jdbcTemplate.query(SqlQueries.GET_PRIVILEGES, new ResultSetExtractor<List<String>>() {
 
 						@Override
-						public Object extractData(ResultSet rs) throws SQLException, DataAccessException {
+						public List<String> extractData(ResultSet rs) throws SQLException, DataAccessException {
+							List<String> authoritie = new ArrayList<>();
 							while (rs.next()) {
-								addresses.add(rs.getString("address"));
+								authoritie.add(rs.getString("privilege"));
 
 							}
 
-							return null;
+							return authoritie;
 						}
 
 					}, user.getUserId());
 
-					jdbcTemplate.query(SqlQueries.GET_ROLES_BY_ID, new ResultSetExtractor<>() {
-
-						@Override
-						public Object extractData(ResultSet rs) throws SQLException, DataAccessException {
-							while (rs.next()) {
-								authorities.add(rs.getString("role"));
-
-							}
-
-							return null;
-						}
-
-					}, user.getUserId());
 					user.setUserAddresses(addresses);
 					user.setUserRoles(authorities);
+					user.setPrivileges(privilege);
 
 				}
 				return user;
@@ -275,56 +343,130 @@ public class UserDaoImpl implements UserDao {
 		return user;
 	}
 
-	
 	@Override
-	public Map<String,Boolean> duplicateEntry(User user) {
-		
-		return jdbcTemplate.query("SELECT USERNAME,USEREMAIL FROM USER WHERE USERID!=? ", new ResultSetExtractor<Map<String,Boolean>>(){
+	public Map<String, Boolean> duplicateEntry(User user) {
+
+		return jdbcTemplate.query("SELECT USERNAME,USEREMAIL FROM USER WHERE USERID!=? ",
+				new ResultSetExtractor<Map<String, Boolean>>() {
+
+					@Override
+					public Map<String, Boolean> extractData(ResultSet rs) throws SQLException, DataAccessException {
+						Map<String, Boolean> dublicates = new HashMap<>();
+						boolean userNameFlag = false;
+						boolean userEmailFlag = false;
+
+						while (rs.next()) {
+							if (rs.getString("USERNAME").equalsIgnoreCase(user.getUserName())) {
+
+								userNameFlag = true;
+							}
+
+							if (rs.getString("USEREMAIL").equalsIgnoreCase(user.getUserEmail())) {
+
+								userEmailFlag = true;
+							}
+
+						}
+
+						if (userNameFlag) {
+							dublicates.put("userName", true);
+						} else {
+							dublicates.put("userName", false);
+						}
+						if (userEmailFlag) {
+							dublicates.put("userEmail", true);
+						} else {
+							dublicates.put("userEmail", false);
+						}
+
+						return dublicates;
+					}
+
+				}, user.getUserId());
+
+	}
+
+	@Override
+	public void addPrivileges(Integer userId) {
+		jdbcTemplate.batchUpdate(SqlQueries.INSERT_USER_PRIVILEGES, new BatchPreparedStatementSetter() {
 
 			@Override
-			public Map<String, Boolean> extractData(ResultSet rs) throws SQLException, DataAccessException {
-				Map<String,Boolean> dublicates=new HashMap<>();
-				boolean userNameFlag=false;
-				boolean userEmailFlag=false;
-				
-				while(rs.next())
-				{
-					if(rs.getString("USERNAME").equalsIgnoreCase(user.getUserName()))
-					{
-						
-						userNameFlag=true;
-					}
-					
-					
-					if(rs.getString("USEREMAIL").equalsIgnoreCase(user.getUserEmail()))
-					{
-						
-						userEmailFlag=true;
-					}
-				
-					
-				}
-			
-				if(userNameFlag)
-				{
-					dublicates.put("userName", true);
-				}
-				else
-				{
-					dublicates.put("userName", false);
-				}
-				if(userEmailFlag)
-				{
-					dublicates.put("userEmail", true);
-				}else
-				{
-					dublicates.put("userEmail", false);
-				}
-				
-				return dublicates;
+			public void setValues(PreparedStatement ps, int i) throws SQLException {
+
+				ps.setInt(1, userId);
+
 			}
-			
-		},user.getUserId());
+
+			@Override
+			public int getBatchSize() {
+
+				return 1;
+			}
+		});
+
+	}
+
+	@Override
+	public List<String> getAddressByUserId(Integer userId) {
+
+		return jdbcTemplate.query(SqlQueries.GET_ADDRESS_BY_USERID, new ResultSetExtractor<List<String>>() {
+
+			@Override
+			public List<String> extractData(ResultSet rs) throws SQLException, DataAccessException {
+
+				List<String> addresses = new ArrayList<>();
+				while (rs.next()) {
+					addresses.add(rs.getString("address"));
+				}
+				return addresses;
+			}
+
+		}, userId);
+
+	}
+
+	@Override
+	public String getAddressByUserIdAndAddressId(Integer userId, Integer addressId) {
+
+		return jdbcTemplate.query(SqlQueries.GET_ADDRESS_BY_USERID_AND_ADDRESSID, new ResultSetExtractor<String>() {
+
+			@Override
+			public String extractData(ResultSet rs) throws SQLException, DataAccessException {
+
+				String address = null;
+				while (rs.next()) {
+					address = rs.getString("address");
+
+				}
+				return address;
+			}
+
+		}, userId, addressId);
+	}
+
+	@Override
+	public String addressIdFounder(Integer addressId) {
+		
+		String address=null;
+		
+		address=jdbcTemplate.query(SqlQueries.ADDRESS_ID_FOUNDER, new ResultSetExtractor<String>() {
+
+			@Override
+			public String extractData(ResultSet rs) throws SQLException, DataAccessException {
+
+				String address = null;
+				while (rs.next()) {
+					address = rs.getString("address");
+
+				}
+				return address;
+			}
+
+		},addressId);
+		 
+		 return address;
+		
+		
 		
 	}
 
