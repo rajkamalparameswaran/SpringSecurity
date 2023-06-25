@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.isteer.dao.layer.UserDao;
 import com.isteer.exception.SqlQueryException;
 import com.isteer.exception.UserIdNotFoundException;
+import com.isteer.module.EndPoint;
 import com.isteer.module.User;
 import com.isteer.services.UserService;
 
@@ -180,6 +181,8 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserResponse getUserById(Integer userId) {
+		
+		
 
 		if (!userDao.isIdFound(userId)) {
 			List<String> exception = new ArrayList<>();
@@ -203,8 +206,9 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public User getUserByUserName(String userName) {
+		User user=userDao.getUserByUserName(userName);
 
-		return userDao.getUserByUserName(userName);
+		return user;
 	}
 
 	@Override
@@ -281,15 +285,113 @@ public class UserServiceImpl implements UserService {
 			
 			String address=userDao.getAddressByUserIdAndAddressId(userId, addressId);
 			
+			
+			if(address==null)
+			{
+				exception.add("userId and address id not match");
+				throw new UserIdNotFoundException(0, "Cannot do process",exception );
+			}
+			
+			
 			return new AddressResponse(1, "Sucess", address);
 			
-		} catch (Exception e) {
+		}catch (UserIdNotFoundException e) {
+			
+			throw e;
+		}
+		catch (Exception e) {
 			exception.add(e.getMessage());
-			throw new SqlQueryException(0, "Cannot do process", exception);
+			throw new SqlQueryException(0, "Cannot do  process", exception);
 		}
 			
 		
 		
+	}
+
+	@Transactional
+	@Override
+	public EndPointResponse addNewEndPoint(EndPoint endPoint) {
+		
+		List<String> exception=new ArrayList<>();
+		if (endPoint.getEndPointName()==null) {
+			exception.add("Please provide Endpoint");
+			
+		}
+		if(endPoint.getAuthorities()==null)
+		{
+			exception.add("Please provide authorization privileges");
+		}
+		
+		if (exception.isEmpty()) {
+			
+			try {
+				
+				Integer EndPointId=userDao.addEndPoint(endPoint);
+				endPoint.setEndPointId(EndPointId);
+				userDao.addAuthorization(endPoint.getAuthorities(), EndPointId);
+				
+				return new EndPointResponse(1, "End point addedd sucessfully", endPoint);
+				
+			} catch (Exception e) {
+
+                    throw e;
+			}
+			
+		}else {
+			throw new SqlQueryException(0, "End point added failed", exception);
+		}
+		
+
+
+		
+	}
+
+
+	@Transactional
+	@Override
+	public EndPointResponse updateEndPointAccess(EndPoint endPoint) {
+		List<String> exception=new ArrayList<>();
+		String endPointName=userDao.endPointIdFounder(endPoint.getEndPointId());
+		endPoint.setEndPointName(endPointName);
+		
+		if(endPointName==null)
+		{
+			exception.add("End Point Id not found");
+			throw new UserIdNotFoundException(0, "Updation failed", exception);
+			
+		}
+		
+		
+		if (endPoint.getAuthorities()==null) {
+			exception.add("Please provide privilleges");
+			
+		}
+		
+		if(!exception.isEmpty())
+		{
+			throw new SqlQueryException(0, "data updated failed", exception);
+		}
+		try {
+			
+			userDao.deleteAuthorization(endPoint.getEndPointId());
+			userDao.addAuthorization(endPoint.getAuthorities(), endPoint.getEndPointId());
+			
+			return new EndPointResponse(1, "data updated sucessfull", endPoint);
+			
+		} catch (Exception e) {
+
+			exception.add(e.getMessage());
+             throw new SqlQueryException(0, "data updated failed", exception);
+		}
+		
+		
+		
+	}
+
+	@Override
+	public List<EndPoint> getAllEndPointDetails() {
+		
+		return userDao.getAllEndPointDetails();
 	}
 
 }

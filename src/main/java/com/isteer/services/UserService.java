@@ -5,10 +5,12 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 
+import com.isteer.module.EndPoint;
 import com.isteer.module.User;
 import com.isteer.service.impl.AddressResponse;
 import com.isteer.service.impl.AddressesResponse;
 import com.isteer.service.impl.AlternativeReturnUser;
+import com.isteer.service.impl.EndPointResponse;
 import com.isteer.service.impl.UserResponse;
 
 public interface UserService {
@@ -32,6 +34,12 @@ public interface UserService {
 	public AddressesResponse getAddressByUserId(Integer userId);
 	
 	public AddressResponse getAddressByUserIdAndAddressId(Integer userId,Integer addressId);
+	
+	public EndPointResponse addNewEndPoint(EndPoint endPoint);
+	
+	public EndPointResponse updateEndPointAccess(EndPoint endPoint);
+	
+	public List<EndPoint> getAllEndPointDetails();
 	
 
 }

@@ -3,6 +3,7 @@ package com.isteer.dao.layer;
 import java.util.List;
 import java.util.Map;
 
+import com.isteer.module.EndPoint;
 import com.isteer.module.User;
 
 public interface UserDao {
@@ -36,11 +37,21 @@ public interface UserDao {
 	public User getUserByUserName(String userName);
 
 	public Map<String, Boolean> duplicateEntry(User user);
-	
+
 	public List<String> getAddressByUserId(Integer userId);
-	
-	public String getAddressByUserIdAndAddressId(Integer userId,Integer addressId);
-	
+
+	public String getAddressByUserIdAndAddressId(Integer userId, Integer addressId);
+
 	public String addressIdFounder(Integer addressId);
+
+	public Integer addEndPoint(EndPoint endPoint);
+
+	public void addAuthorization(List<String> authorities, Integer endPointId);
+
+	public void deleteAuthorization(Integer endPointId);
+	
+	public String endPointIdFounder(Integer endPointId);
+	
+	public List<EndPoint> getAllEndPointDetails();
 
 }

@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import com.isteer.dao.layer.UserDao;
+import com.isteer.module.EndPoint;
 import com.isteer.module.User;
 import com.isteer.spring.security.SpringSecurity;
 import com.isteer.sql.queries.SqlQueries;
@@ -333,6 +334,7 @@ public class UserDaoImpl implements UserDao {
 					user.setUserAddresses(addresses);
 					user.setUserRoles(authorities);
 					user.setPrivileges(privilege);
+					break;
 
 				}
 				return user;
@@ -362,7 +364,6 @@ public class UserDaoImpl implements UserDao {
 							}
 
 							if (rs.getString("USEREMAIL").equalsIgnoreCase(user.getUserEmail())) {
-
 								userEmailFlag = true;
 							}
 
@@ -446,10 +447,10 @@ public class UserDaoImpl implements UserDao {
 
 	@Override
 	public String addressIdFounder(Integer addressId) {
-		
-		String address=null;
-		
-		address=jdbcTemplate.query(SqlQueries.ADDRESS_ID_FOUNDER, new ResultSetExtractor<String>() {
+
+		String address = null;
+
+		address = jdbcTemplate.query(SqlQueries.ADDRESS_ID_FOUNDER, new ResultSetExtractor<String>() {
 
 			@Override
 			public String extractData(ResultSet rs) throws SQLException, DataAccessException {
@@ -462,12 +463,118 @@ public class UserDaoImpl implements UserDao {
 				return address;
 			}
 
-		},addressId);
-		 
-		 return address;
-		
-		
-		
+		}, addressId);
+
+		return address;
+
+	}
+
+	@Override
+	public Integer addEndPoint(EndPoint endPoint) {
+
+		KeyHolder holder = new GeneratedKeyHolder();
+
+		jdbcTemplate.update(con -> {
+			PreparedStatement ps = con.prepareStatement(SqlQueries.ADD_END_POINT,
+					PreparedStatement.RETURN_GENERATED_KEYS);
+			ps.setString(1, endPoint.getEndPointName());
+			return ps;
+
+		}, holder);
+
+		return holder.getKey().intValue();
+	}
+
+	@Override
+	public void addAuthorization(List<String> authorities, Integer endPointId) {
+
+		jdbcTemplate.batchUpdate(SqlQueries.ADD_AUTHORIZATION, new BatchPreparedStatementSetter() {
+
+			@Override
+			public void setValues(PreparedStatement ps, int i) throws SQLException {
+
+				ps.setInt(1, endPointId);
+				ps.setString(2, authorities.get(i));
+
+			}
+
+			@Override
+			public int getBatchSize() {
+
+				return authorities.size();
+			}
+
+		});
+
+	}
+
+	@Override
+	public void deleteAuthorization(Integer endPointId) {
+
+		jdbcTemplate.update(SqlQueries.DELETE_AUTHORIZATION, endPointId);
+
+	}
+
+	@Override
+	public String endPointIdFounder(Integer endPointId) {
+
+		String endPointName = jdbcTemplate.query(SqlQueries.END_POINT_ID_FOUNDER, new ResultSetExtractor<String>() {
+
+			@Override
+			public String extractData(ResultSet rs) throws SQLException, DataAccessException {
+				String endPointName = null;
+				while (rs.next()) {
+					endPointName = rs.getString("endpointName");
+				}
+
+				return endPointName;
+			}
+
+		}, endPointId);
+
+		return endPointName;
+	}
+
+	@Override
+	public List<EndPoint> getAllEndPointDetails() {
+
+		return jdbcTemplate.query(SqlQueries.GET_ALL_END_POINT, new ResultSetExtractor<List<EndPoint>>() {
+
+			@Override
+			public List<EndPoint> extractData(ResultSet rs) throws SQLException, DataAccessException {
+
+				List<EndPoint> allEndPoints = new ArrayList<>();
+
+				while (rs.next()) {
+					EndPoint endPoint = new EndPoint();
+					endPoint.setEndPointId(rs.getInt("endPointId"));
+					endPoint.setEndPointName(rs.getString("endpointName"));
+					List<String> privilege = new ArrayList<>();
+					privilege = jdbcTemplate.query(SqlQueries.GET_ALL_AUTHORIZATION,
+							new ResultSetExtractor<List<String>>() {
+
+								@Override
+								public List<String> extractData(ResultSet rs) throws SQLException, DataAccessException {
+
+									List<String> privilege = new ArrayList<>();
+									while (rs.next()) {
+										privilege.add(rs.getString("privilege"));
+
+									}
+									return privilege;
+								}
+
+							}, endPoint.getEndPointId());
+					endPoint.setAuthorities(privilege);
+					allEndPoints.add(endPoint);
+
+				}
+
+				return allEndPoints;
+			}
+
+		});
+
 	}
 
 }

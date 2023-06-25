@@ -26,10 +26,12 @@ import com.isteer.exception.UserTokenException;
 import com.isteer.jwt.token.JwtRequest;
 import com.isteer.jwt.token.JwtRsponse;
 import com.isteer.jwt.token.JwtUtil;
+import com.isteer.module.EndPoint;
 import com.isteer.module.User;
 import com.isteer.service.impl.AddressResponse;
 import com.isteer.service.impl.AddressesResponse;
 import com.isteer.service.impl.AlternativeReturnUser;
+import com.isteer.service.impl.EndPointResponse;
 import com.isteer.service.impl.UserResponse;
 import com.isteer.services.UserService;
 
@@ -117,6 +119,31 @@ public class UserController {
 		return new ResponseEntity<AddressResponse>(service.getAddressByUserIdAndAddressId(userId, addressId), HttpStatus.FOUND);
 
 	}
+	
+	@PostMapping("/addnewendpoint")
+	public ResponseEntity<EndPointResponse> addNewEndPoint(@RequestBody EndPoint endPoint){
+		
+		return new ResponseEntity<EndPointResponse>(service.addNewEndPoint(endPoint),HttpStatus.CREATED);
+		
+		
+	}
+	
+
+	@PutMapping("/updateendpointbyendpointid")
+	public ResponseEntity<EndPointResponse> updateEndPointByEndPointId(@RequestBody EndPoint endPoint){
+		
+		return new ResponseEntity<EndPointResponse>(service.updateEndPointAccess(endPoint),HttpStatus.OK);
+		
+		
+	}
+	
+	@GetMapping("/getAllEndPointDetails")
+	public ResponseEntity<List<EndPoint>> getAllEndPoint()
+	{
+		return new ResponseEntity<List<EndPoint>>(service.getAllEndPointDetails(),HttpStatus.FOUND);
+	}
+	
+	
 
 }
 
