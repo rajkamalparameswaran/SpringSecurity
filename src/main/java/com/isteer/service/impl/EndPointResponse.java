@@ -2,7 +2,6 @@ package com.isteer.service.impl;
 
 import com.isteer.module.EndPoint;
 
-
 public class EndPointResponse {
 
 	private int statusCode;
@@ -43,5 +42,4 @@ public class EndPointResponse {
 	public void setEndPoint(EndPoint endPoint) {
 		this.endPoint = endPoint;
 	}
-
 }

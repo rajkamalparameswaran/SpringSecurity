@@ -83,5 +83,4 @@ public class ReturnUser {
 	public void setUserRoles(List<String> userRoles) {
 		this.userRoles = userRoles;
 	}
-
 }

@@ -1,7 +1,7 @@
 package com.isteer.jwt.token;
 
 public class JwtRsponse {
-	
+
 	private String jwt;
 
 	public JwtRsponse(String jwt) {
@@ -20,6 +20,4 @@ public class JwtRsponse {
 	public void setJwt(String jwt) {
 		this.jwt = jwt;
 	}
-	
-
 }

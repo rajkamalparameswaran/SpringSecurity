@@ -1,10 +1,10 @@
 package com.isteer.controller;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +18,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.isteer.exception.UserIdNotFoundException;
-import com.isteer.exception.UserTokenException;
 import com.isteer.jwt.token.JwtRequest;
 import com.isteer.jwt.token.JwtRsponse;
 import com.isteer.jwt.token.JwtUtil;
@@ -38,10 +36,14 @@ import com.isteer.services.UserService;
 @RestController
 public class UserController {
 
+	private Logger logger=Logger.getLogger(UserController.class);
+
 	@Autowired
 	UserService service;
+
 	@Autowired
 	AuthenticationManager authenticationManager;
+
 	@Autowired
 	JwtUtil util;
 
@@ -55,7 +57,7 @@ public class UserController {
 
 	@PutMapping("/updateUser")
 	public ResponseEntity<AlternativeReturnUser> updateUser(@RequestBody User user) {
-		System.out.println(user.isAccountNonExpired());
+
 		return new ResponseEntity<AlternativeReturnUser>(service.updateUser(user), HttpStatus.ACCEPTED);
 	}
 
@@ -71,7 +73,6 @@ public class UserController {
 
 	@GetMapping("/getuserbyid/{userId}")
 	public ResponseEntity<UserResponse> getUserById(@PathVariable Integer userId) {
-				
 		return new ResponseEntity<UserResponse>(service.getUserById(userId), HttpStatus.FOUND);
 	}
 
@@ -83,72 +84,51 @@ public class UserController {
 	@GetMapping("/getuserbyname/{userName}")
 	public ResponseEntity<User> getUserByName(@PathVariable String userName) {
 		return new ResponseEntity<User>(service.getUserByUserName(userName), HttpStatus.FOUND);
-
 	}
 
 	@PostMapping("/authenticate")
 	public ResponseEntity<JwtRsponse> authenticat(@RequestBody JwtRequest request) {
 		try {
-
 			authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(request.getUserName(), request.getUserPassword()));
-
 		} catch (Exception e) {
 			List<String> exception = new ArrayList<>();
 			exception.add("Something wrong in userd id or password");
+			logger.error("Something wrong in userd id or password");
 			throw new UserIdNotFoundException(0, "Login failed", exception);
 		}
-
 		UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUserName());
-
 		String jwt = util.generateToken(userDetails);
 		JwtRsponse jwtRsponse = new JwtRsponse(jwt);
-
 		return new ResponseEntity<JwtRsponse>(jwtRsponse, HttpStatus.CREATED);
 	}
-	
+
 	@GetMapping("/getaddressbyuserId/{userId}")
 	public ResponseEntity<AddressesResponse> getGetAddressById(@PathVariable Integer userId) {
 		return new ResponseEntity<AddressesResponse>(service.getAddressByUserId(userId), HttpStatus.FOUND);
 
 	}
-	
-	@GetMapping("/getaddressbyuserIdandaddressId/{userId}/{addressId}")
-	public ResponseEntity<AddressResponse> getGetAddressById(@PathVariable Integer userId,@PathVariable Integer addressId) {
-	
-		return new ResponseEntity<AddressResponse>(service.getAddressByUserIdAndAddressId(userId, addressId), HttpStatus.FOUND);
 
+	@GetMapping("/getaddressbyuserIdandaddressId/{userId}/{addressId}")
+	public ResponseEntity<AddressResponse> getGetAddressById(@PathVariable Integer userId,
+			@PathVariable Integer addressId) {
+		return new ResponseEntity<AddressResponse>(service.getAddressByUserIdAndAddressId(userId, addressId),
+				HttpStatus.FOUND);
 	}
-	
+
 	@PostMapping("/addnewendpoint")
-	public ResponseEntity<EndPointResponse> addNewEndPoint(@RequestBody EndPoint endPoint){
-		
-		return new ResponseEntity<EndPointResponse>(service.addNewEndPoint(endPoint),HttpStatus.CREATED);
-		
-		
+	public ResponseEntity<EndPointResponse> addNewEndPoint(@RequestBody EndPoint endPoint) {
+		return new ResponseEntity<EndPointResponse>(service.addNewEndPoint(endPoint), HttpStatus.CREATED);
 	}
-	
 
 	@PutMapping("/updateendpointbyendpointid")
-	public ResponseEntity<EndPointResponse> updateEndPointByEndPointId(@RequestBody EndPoint endPoint){
-		
-		return new ResponseEntity<EndPointResponse>(service.updateEndPointAccess(endPoint),HttpStatus.OK);
-		
-		
+	public ResponseEntity<EndPointResponse> updateEndPointByEndPointId(@RequestBody EndPoint endPoint) {
+		return new ResponseEntity<EndPointResponse>(service.updateEndPointAccess(endPoint), HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/getAllEndPointDetails")
-	public ResponseEntity<List<EndPoint>> getAllEndPoint()
-	{
-		return new ResponseEntity<List<EndPoint>>(service.getAllEndPointDetails(),HttpStatus.FOUND);
+	public ResponseEntity<List<EndPoint>> getAllEndPoint() {
+		return new ResponseEntity<List<EndPoint>>(service.getAllEndPointDetails(), HttpStatus.FOUND);
 	}
-	
-	
 
 }
-
-
-
-
-
-
