@@ -2,7 +2,7 @@
 <Configuration status="WARN">
 	<Properties>
 		<Property name="PATTERN">%d - %C - [%M] - %m %n </Property>
-		<Property name="location">C:\Users\rajkamal.parameswara\Desktop\gitdata\SpringJwt\logs
+		<Property name="location">./target/logs
 		</Property>
 	</Properties>
 	<Appenders>
