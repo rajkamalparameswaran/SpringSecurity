@@ -12,7 +12,9 @@ public class SpringSecurityUserApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(SpringSecurityUserApplication.class, args);
 		
-		LOGGER.info("Application started sucessfully");;
+		LOGGER.info("Application started sucessfully");
+		
+		
 		
 		
 

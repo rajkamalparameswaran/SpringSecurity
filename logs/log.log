@@ -1,0 +1,4 @@
+2023-07-04 19:21:20,301 - com.isteer.SpringSecurityUserApplication - [main] - Application started sucessfully 
+2023-07-04 19:22:01,509 - com.isteer.SpringSecurityUserApplication - [main] - Application started sucessfully 
+2023-07-04 19:22:57,237 - com.isteer.controller.UserController - [authenticat] - Something wrong in userd id or password 
+2023-07-04 19:27:54,692 - com.isteer.controller.UserController - [authenticat] - Something wrong in userd id or password 
