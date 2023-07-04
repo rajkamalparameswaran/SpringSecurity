@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -19,7 +21,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class AccessDeniedEntryPoint implements AccessDeniedHandler {
 
-	private Logger logger=Logger.getLogger(AccessDeniedEntryPoint.class);
+	private Logger logger=LogManager.getLogger(AccessDeniedEntryPoint.class);
 
 	@Override
 	public void handle(HttpServletRequest request, HttpServletResponse response,

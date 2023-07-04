@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -18,7 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class CustomBearerTokenExceptionEntryPoint implements AuthenticationEntryPoint {
-	private Logger logger=Logger.getLogger(CustomBearerTokenExceptionEntryPoint.class);
+	private Logger logger=LogManager.getLogger(CustomBearerTokenExceptionEntryPoint.class);
 
 	@Override
 	public void commence(HttpServletRequest request, HttpServletResponse response,

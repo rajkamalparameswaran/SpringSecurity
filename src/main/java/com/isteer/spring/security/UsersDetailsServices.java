@@ -3,7 +3,9 @@ package com.isteer.spring.security;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,7 +18,7 @@ import com.isteer.module.User;
 
 @Service
 public class UsersDetailsServices implements UserDetailsService {
-	private final Logger logger=Logger.getLogger(UsersDetailsServices.class);
+	private final Logger logger=LogManager.getLogger(UsersDetailsServices.class);
 
 	@Autowired
 	UserDao dao;

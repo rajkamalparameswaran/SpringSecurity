@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+	<Properties>
+		<Property name="PATTERN">%d - %C - [%M] - %m %n </Property>
+		<Property name="location">C:\Users\rajkamal.parameswara\Desktop\gitdata\SpringJwt\logs
+		</Property>
+	</Properties>
+	<Appenders>
+
+		<Console name="Console" target="SYSTEM_OUT" follow="true">
+			<PatternLayout pattern="${PATTERN}" />
+		</Console>
+
+		<RollingFile name="Rollers" fileName="${location}/log.log"
+			filePattern="${location}/files/log-%d{yyyy-MM-dd-HH-SS}- %i.log">
+			<ThresholdFilter level="ERROR" onMatch="ACCEPT"
+				onMismatch="DENY" />
+			<PatternLayout pattern="${PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="10MB">
+				</SizeBasedTriggeringPolicy>
+			</Policies>
+			<DefaultRolloverStrategy max="1">
+				<Delete basePath="${location}">
+					<IfFileName glob="*/log-*.log" />
+					<IfLastModified age="P30D" />
+				</Delete>
+			</DefaultRolloverStrategy>
+
+		</RollingFile>
+
+	</Appenders>
+	<Loggers>
+		<Logger name="CommonLogger" level="debug" additivity="false">
+			<AppenderRef ref="Console"></AppenderRef>
+			<AppenderRef ref="Rollers"></AppenderRef>
+		</Logger>
+
+		<Root level="error">
+			<AppenderRef ref="Console"></AppenderRef>
+			<AppenderRef ref="Rollers"></AppenderRef>
+		</Root>
+	</Loggers>
+</Configuration>
