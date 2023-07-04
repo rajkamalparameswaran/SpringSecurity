@@ -1,2 +1,0 @@
-2023-07-04 18:25:59,132 - com.isteer.service.impl.UserServiceImpl - [addUser] - Please provide Valid Data 
-2023-07-04 18:28:38,990 - com.isteer.controller.UserController - [authenticat] - Something wrong in userd id or password 
