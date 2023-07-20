@@ -13,10 +13,10 @@ import com.isteer.service.impl.UserResponse;
 
 public interface UserService {
 
-	public boolean isIdFound(Integer userId);
+	
 	public UserResponse addUser(User user);
 	public AlternativeReturnUser updateUser(User user);
-	public UserResponse deleteUserById(Integer userId);
+	public Map<String,Object> deleteUserById(Integer userId);
 	public UserResponse getUserById(Integer userId);
 	public List<Map<String, Object>> getAllUser();
 	public User getUserByUserName(String userName);
@@ -26,4 +26,5 @@ public interface UserService {
 	public EndPointResponse addNewEndPoint(EndPoint endPoint);
 	public EndPointResponse updateEndPointAccess(EndPoint endPoint);
 	public List<EndPoint> getAllEndPointDetails();
+	
 }

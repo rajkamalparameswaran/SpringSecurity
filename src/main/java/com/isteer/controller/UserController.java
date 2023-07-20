@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +23,8 @@ import com.isteer.exception.UserIdNotFoundException;
 import com.isteer.jwt.token.JwtRequest;
 import com.isteer.jwt.token.JwtRsponse;
 import com.isteer.jwt.token.JwtUtil;
+import com.isteer.logs.Log4j2;
+import com.isteer.message.properties.FailedMessage;
 import com.isteer.module.EndPoint;
 import com.isteer.module.User;
 import com.isteer.service.impl.AddressResponse;
@@ -34,11 +33,16 @@ import com.isteer.service.impl.AlternativeReturnUser;
 import com.isteer.service.impl.EndPointResponse;
 import com.isteer.service.impl.UserResponse;
 import com.isteer.services.UserService;
+import com.isteer.statuscode.StatusCode;
 
 @RestController
 public class UserController {
-
-	private Logger logger=LogManager.getLogger("CommonLogger");
+	
+	@Autowired
+	private FailedMessage property;
+	
+	@Autowired
+	FailedMessage messageProperty;
 
 	@Autowired
 	UserService service;
@@ -54,38 +58,38 @@ public class UserController {
 
 	@PostMapping("/addUser")
 	public ResponseEntity<UserResponse> addUser(@RequestBody User user) {
-		return new ResponseEntity<UserResponse>(service.addUser(user), HttpStatus.CREATED);
+		return new ResponseEntity<>(service.addUser(user), HttpStatus.CREATED);
 	}
 
 	@PutMapping("/updateUser")
 	public ResponseEntity<AlternativeReturnUser> updateUser(@RequestBody User user) {
 
-		return new ResponseEntity<AlternativeReturnUser>(service.updateUser(user), HttpStatus.ACCEPTED);
+		return new ResponseEntity<>(service.updateUser(user), HttpStatus.ACCEPTED);
 	}
 
 	@PutMapping("/grandPermissions")
-	public ResponseEntity<String> GrantPermission(@RequestBody User user) {
-		return new ResponseEntity<String>(service.grantPermission(user), HttpStatus.ACCEPTED);
+	public ResponseEntity<String> grantPermission(@RequestBody User user) {
+		return new ResponseEntity<>(service.grantPermission(user), HttpStatus.ACCEPTED);
 	}
 
 	@DeleteMapping("/deleteuserbyid/{userId}")
-	public ResponseEntity<UserResponse> updateUser(@PathVariable Integer userId) {
-		return new ResponseEntity<UserResponse>(service.deleteUserById(userId), HttpStatus.OK);
+	public ResponseEntity<Map<String,Object>> updateUser(@PathVariable Integer userId) {
+		return new ResponseEntity<>(service.deleteUserById(userId), HttpStatus.OK);
 	}
 
 	@GetMapping("/getuserbyid/{userId}")
 	public ResponseEntity<UserResponse> getUserById(@PathVariable Integer userId) {
-		return new ResponseEntity<UserResponse>(service.getUserById(userId), HttpStatus.FOUND);
+		return new ResponseEntity<>(service.getUserById(userId), HttpStatus.FOUND);
 	}
 
 	@GetMapping("/getalluser")
 	public ResponseEntity<List<Map<String, Object>>> getAllUser() {
-		return new ResponseEntity<List<Map<String, Object>>>(service.getAllUser(), HttpStatus.FOUND);
+		return new ResponseEntity<>(service.getAllUser(), HttpStatus.FOUND);
 	}
 
 	@GetMapping("/getuserbyname/{userName}")
 	public ResponseEntity<User> getUserByName(@PathVariable String userName) {
-		return new ResponseEntity<User>(service.getUserByUserName(userName), HttpStatus.FOUND);
+		return new ResponseEntity<>(service.getUserByUserName(userName), HttpStatus.FOUND);
 	}
 
 	@PostMapping("/authenticate")
@@ -95,42 +99,42 @@ public class UserController {
 					new UsernamePasswordAuthenticationToken(request.getUserName(), request.getUserPassword()));
 		} catch (Exception e) {
 			List<String> exception = new ArrayList<>();
-			exception.add("Something wrong in userd id or password");
-			logger.error("Something wrong in userd id or password");
-			throw new UserIdNotFoundException(0, "Login failed", exception);
+			exception.add(property.getWrongUserIdOrPassword());
+			Log4j2.getAuditlog().info(property.getWrongUserIdOrPassword());
+			throw new UserIdNotFoundException(StatusCode.USERAUTHENTICATIONFAILED.getCode(),property.getLoginFailed(), exception);
 		}
 		UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUserName());
 		String jwt = util.generateToken(userDetails);
 		JwtRsponse jwtRsponse = new JwtRsponse(jwt);
-		return new ResponseEntity<JwtRsponse>(jwtRsponse, HttpStatus.CREATED);
+		return new ResponseEntity<>(jwtRsponse, HttpStatus.CREATED);
 	}
 
 	@GetMapping("/getaddressbyuserId/{userId}")
 	public ResponseEntity<AddressesResponse> getGetAddressById(@PathVariable Integer userId) {
-		return new ResponseEntity<AddressesResponse>(service.getAddressByUserId(userId), HttpStatus.FOUND);
+		return new ResponseEntity<>(service.getAddressByUserId(userId), HttpStatus.FOUND);
 
 	}
 
 	@GetMapping("/getaddressbyuserIdandaddressId/{userId}/{addressId}")
 	public ResponseEntity<AddressResponse> getGetAddressById(@PathVariable Integer userId,
 			@PathVariable Integer addressId) {
-		return new ResponseEntity<AddressResponse>(service.getAddressByUserIdAndAddressId(userId, addressId),
+		return new ResponseEntity<>(service.getAddressByUserIdAndAddressId(userId, addressId),
 				HttpStatus.FOUND);
 	}
 
 	@PostMapping("/addnewendpoint")
 	public ResponseEntity<EndPointResponse> addNewEndPoint(@RequestBody EndPoint endPoint) {
-		return new ResponseEntity<EndPointResponse>(service.addNewEndPoint(endPoint), HttpStatus.CREATED);
+		return new ResponseEntity<>(service.addNewEndPoint(endPoint), HttpStatus.CREATED);
 	}
 
 	@PutMapping("/updateendpointbyendpointid")
 	public ResponseEntity<EndPointResponse> updateEndPointByEndPointId(@RequestBody EndPoint endPoint) {
-		return new ResponseEntity<EndPointResponse>(service.updateEndPointAccess(endPoint), HttpStatus.OK);
+		return new ResponseEntity<>(service.updateEndPointAccess(endPoint), HttpStatus.OK);
 	}
 
 	@GetMapping("/getAllEndPointDetails")
 	public ResponseEntity<List<EndPoint>> getAllEndPoint() {
-		return new ResponseEntity<List<EndPoint>>(service.getAllEndPointDetails(), HttpStatus.FOUND);
+		return new ResponseEntity<>(service.getAllEndPointDetails(), HttpStatus.FOUND);
 	}
 
 }

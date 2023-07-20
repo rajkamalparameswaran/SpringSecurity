@@ -2,7 +2,6 @@ package com.isteer.spring.security;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,21 +26,22 @@ import com.isteer.module.EndPoint;
 @Configuration
 @EnableWebSecurity
 public class SpringSecurity {
+	
+	private final UserDetailsService userDetailsService;
+    private final JwtFilter jwtFilter;
+    private final CustomBearerTokenExceptionEntryPoint customBearerTokenExceptionEntryPoint;
+    private final AccessDeniedEntryPoint accessDeniedEntryPoint;
+    private final UserDao dao;
 
-	@Autowired
-	UserDetailsService userDetailsService;
-
-	@Autowired
-	JwtFilter jwtFilter;
-
-	@Autowired
-	CustomBearerTokenExceptionEntryPoint customBearerTokenExceptionEntryPoint;
-
-	@Autowired
-	AccessDeniedEntryPoint accessDeniedEntryPoint;
-
-	@Autowired
-	UserDao dao;
+    public SpringSecurity(UserDetailsService userDetailsService, JwtFilter jwtFilter,
+                          CustomBearerTokenExceptionEntryPoint customBearerTokenExceptionEntryPoint,
+                          AccessDeniedEntryPoint accessDeniedEntryPoint, UserDao dao) {
+        this.userDetailsService = userDetailsService;
+        this.jwtFilter = jwtFilter;
+        this.customBearerTokenExceptionEntryPoint = customBearerTokenExceptionEntryPoint;
+        this.accessDeniedEntryPoint = accessDeniedEntryPoint;
+        this.dao = dao;
+    }
 
 	@Bean
 	public PasswordEncoder bCryptPasswordEncoder() {
@@ -50,23 +50,23 @@ public class SpringSecurity {
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-		httpSecurity.cors((cors) -> cors.disable());
-		httpSecurity.csrf((csr) -> csr.disable());
+		httpSecurity.cors(cors -> cors.disable());
+		httpSecurity.csrf(csr -> csr.disable());
 		List<EndPoint> endPoints = dao.getAllEndPointDetails();
 		for (EndPoint endPoint : endPoints) {
 			if (endPoint.getAuthorities().contains("PermitAll")) {
 				httpSecurity.authorizeHttpRequests(
-						(request) -> request.requestMatchers(endPoint.getEndPointName()).permitAll());
+						request -> request.requestMatchers(endPoint.getEndPointName()).permitAll());
 			} else {
 				String[] authority = endPoint.getAuthorities().stream().toArray(String[]::new);
 				httpSecurity.authorizeHttpRequests(
-						(request) -> request.requestMatchers(endPoint.getEndPointName()).hasAnyAuthority(authority));
+						request -> request.requestMatchers(endPoint.getEndPointName()).hasAnyAuthority(authority));
 			}
 		}
 		httpSecurity
-		.exceptionHandling((exp) -> exp.authenticationEntryPoint(customBearerTokenExceptionEntryPoint)
+		.exceptionHandling(exp -> exp.authenticationEntryPoint(customBearerTokenExceptionEntryPoint)
 				.accessDeniedHandler(accessDeniedEntryPoint))
-		.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+		.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 		httpSecurity.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 		return httpSecurity.build();
 	}

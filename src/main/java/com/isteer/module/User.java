@@ -1,9 +1,14 @@
 package com.isteer.module;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class User {
+public class User implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private int userId;
 	private String userName;
 	private String userFullName;
@@ -133,5 +138,14 @@ public class User {
 
 	public void setEnabled(boolean isEnabled) {
 		this.isEnabled = isEnabled;
+	}
+
+	@Override
+	public String toString() {
+		return "User [userId=" + userId + ", userName=" + userName + ", userFullName=" + userFullName + ", userEmail="
+				+ userEmail + ", userPassword=" + userPassword + ", userAddresses=" + userAddresses + ", userRoles="
+				+ userRoles + ", privileges=" + privileges + ", isAccountNonExpired=" + isAccountNonExpired
+				+ ", isAccountNonLocked=" + isAccountNonLocked + ", isCredentialsNonExpired=" + isCredentialsNonExpired
+				+ ", isEnabled=" + isEnabled + "]";
 	}
 }

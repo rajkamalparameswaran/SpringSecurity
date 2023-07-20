@@ -8,28 +8,30 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import com.isteer.statuscode.StatusCode;
+
 @ControllerAdvice
 public class UserExceptionHandler {
 
 	@ExceptionHandler(value = { UserIdNotFoundException.class })
-	public ResponseEntity<UserException> userIdNOtFoundException(UserIdNotFoundException idNotFoundException) {
-		UserException userException = new UserException(idNotFoundException.getStatusCode(),
+	public ResponseEntity<UserError> userIdNOtFoundException(UserIdNotFoundException idNotFoundException) {
+		UserError userException = new UserError(idNotFoundException.getStatusCode(),
 				idNotFoundException.getReason(), idNotFoundException.getException());
-		return new ResponseEntity<UserException>(userException, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<>(userException, HttpStatus.NOT_FOUND);
 	}
 
 	@ExceptionHandler(value = { SqlQueryException.class })
-	public ResponseEntity<UserException> sqlQueryExcepton(SqlQueryException queryException) {
-		UserException userException = new UserException(queryException.getStatusCode(), queryException.getReason(),
-				queryException.getException());
-		return new ResponseEntity<UserException>(userException, HttpStatus.BAD_REQUEST);
+	public ResponseEntity<UserError> sqlQueryExcepton(SqlQueryException queryException) {
+		UserError userException = new UserError(queryException.getStatusCode(), queryException.getReason(),
+				queryException.getErrorMsg());
+		return new ResponseEntity<>(userException, HttpStatus.BAD_REQUEST);
 	}
 
 	@ExceptionHandler(value = { Exception.class })
-	public ResponseEntity<UserException> handleCommonException(Exception exp) {
+	public ResponseEntity<UserError> handleCommonException(Exception exp) {
 		List<String> exception = new ArrayList<>();
 		exception.add(exp.getMessage());
-		UserException userException = new UserException(0, "Cannot Do Process", exception);
-		return new ResponseEntity<UserException>(userException, HttpStatus.BAD_REQUEST);
+		UserError userException = new UserError(StatusCode.ACCOUNTCREATEDFAILED.getCode(), "Cannot Do Process", exception);
+		return new ResponseEntity<>(userException, HttpStatus.BAD_REQUEST);
 	}
 }

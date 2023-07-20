@@ -12,6 +12,10 @@ import com.isteer.module.User;
 
 public class Principles implements UserDetails {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private User user;
 
 	public Principles(User user) {

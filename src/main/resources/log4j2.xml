@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
 	<Properties>
-		<Property name="PATTERN">%d - %C - [%M] - %m %n </Property>
-		<Property name="location">./target/logs
-		</Property>
+		<Property name="PATTERN">%p - %d - %C - [%M] - %m %n </Property>
+		<Property name="location">./target/logs</Property>
+		<Property name="auditLocation">./target/Audit
+		</Property>	
 	</Properties>
 	<Appenders>
 
@@ -11,17 +12,15 @@
 			<PatternLayout pattern="${PATTERN}" />
 		</Console>
 
-		<RollingFile name="Rollers" fileName="${location}/log.log"
-			filePattern="${location}/files/log-%d{yyyy-MM-dd-HH-SS}- %i.log">
-			<ThresholdFilter level="ERROR" onMatch="ACCEPT"
-				onMismatch="DENY" />
+		<RollingFile name="AuditLogger" fileName="${auditLocation}/audit.log"
+			filePattern="${auditLocation}/files/audit-%d{yyyy-MM-dd-HH-SS}- %i.log">
 			<PatternLayout pattern="${PATTERN}" />
 			<Policies>
 				<SizeBasedTriggeringPolicy size="10MB">
 				</SizeBasedTriggeringPolicy>
 			</Policies>
 			<DefaultRolloverStrategy max="1">
-				<Delete basePath="${location}">
+				<Delete basePath="${auditLocation}">
 					<IfFileName glob="*/log-*.log" />
 					<IfLastModified age="P30D" />
 				</Delete>
@@ -31,14 +30,16 @@
 
 	</Appenders>
 	<Loggers>
-		<Logger name="CommonLogger" level="debug" additivity="false">
+		<Logger name="com.isteer" level="debug" additivity="false">
 			<AppenderRef ref="Console"></AppenderRef>
-			<AppenderRef ref="Rollers"></AppenderRef>
+			
+		</Logger>
+		<Logger name="AuditLogs" level="debug" additivity="false">
+			<AppenderRef ref="AuditLogger"></AppenderRef>
 		</Logger>
 
 		<Root level="error">
 			<AppenderRef ref="Console"></AppenderRef>
-			<AppenderRef ref="Rollers"></AppenderRef>
 		</Root>
 	</Loggers>
 </Configuration>

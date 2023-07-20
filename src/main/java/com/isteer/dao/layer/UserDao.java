@@ -1,5 +1,6 @@
 package com.isteer.dao.layer;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -7,27 +8,30 @@ import com.isteer.module.EndPoint;
 import com.isteer.module.User;
 
 public interface UserDao {
-	public boolean isIdFound(Integer userId);
-	public Integer addUser(User user);
-	public void addAddresses(List<String> userAddresses, Integer userId);
-	public void addRoles(List<String> userRoles, Integer userId);
-	public void addPrivileges(List<String> privileges, Integer userId);
-	public void addPrivileges(Integer userId);
-	public void updateUser(User user);
-	public void deleteUserById(Integer userId);
-	public void deleteAddressById(Integer userId);
-	public void deletePrivilegesById(Integer userId);
-	public void deleteRolesById(Integer userId);
-	public User getUserById(Integer userId);
-	public List<Map<String, Object>> getAllUsers();
-	public User getUserByUserName(String userName);
-	public Map<String, Boolean> duplicateEntry(User user);
-	public List<String> getAddressByUserId(Integer userId);
-	public String getAddressByUserIdAndAddressId(Integer userId, Integer addressId);
-	public String addressIdFounder(Integer addressId);
-	public Integer addEndPoint(EndPoint endPoint);
-	public void addAuthorization(List<String> authorities, Integer endPointId);
-	public void deleteAuthorization(Integer endPointId);
-	public String endPointIdFounder(Integer endPointId);
-	public List<EndPoint> getAllEndPointDetails();
+	public boolean isIdFound(Integer userId) throws SQLException;
+	public Integer addUser(User user) throws SQLException;
+	public void addAddresses(List<String> userAddresses, Integer userId) throws SQLException;
+	public void addRoles(List<String> userRoles, Integer userId) throws SQLException;
+	public void addPrivileges(List<String> privileges, Integer userId) throws SQLException;
+	public void addPrivileges(Integer userId) throws SQLException;
+	public void updateUser(User user) throws SQLException;
+	public void deleteUserById(Integer userId) throws SQLException;
+	public void deleteAddressById(Integer userId) throws SQLException;
+	public void deletePrivilegesById(Integer userId) throws SQLException;
+	public void deleteRolesById(Integer userId) throws SQLException;
+	public User getUserById(Integer userId) throws SQLException;
+	public List<Map<String, Object>> getAllUsers() throws SQLException;
+	public User getUserByUserName(String userName) throws SQLException;
+	public List<String> getAddressByUserId(Integer userId) throws SQLException;
+	public List<String> getAuthoriesByUserId(Integer userId) throws SQLException;
+	public List<String> getPrivilegesByUserId(Integer userId) throws SQLException;
+	public String getAddressByUserIdAndAddressId(Integer userId, Integer addressId) throws SQLException;
+	public String addressIdFounder(Integer addressId) throws SQLException;
+	public Integer addEndPoint(EndPoint endPoint) throws SQLException;
+	public void addAuthorization(List<String> authorities, Integer endPointId) throws SQLException;
+	public void deleteAuthorization(Integer endPointId) throws SQLException;
+	public String endPointIdFounder(Integer endPointId) throws SQLException;
+	public List<EndPoint> getAllEndPointDetails() throws SQLException;
+	public int toCheckDuplicateUserName(String userName,int userId) throws SQLException;
+	public int toCheckDuplicateUserEmail(String userEmail,int userId) throws SQLException;
 }
