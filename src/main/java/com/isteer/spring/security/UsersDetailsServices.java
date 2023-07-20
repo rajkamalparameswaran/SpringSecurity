@@ -30,7 +30,7 @@ public class UsersDetailsServices implements UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		User user=null;
+		User user;
 		try {
 			user = dao.getUserByUserName(username);
 		}catch (SQLException e) {
