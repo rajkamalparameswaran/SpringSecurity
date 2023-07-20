@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -18,6 +17,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isteer.dao.layer.UserDao;
 import com.isteer.logs.Log4j2;
@@ -40,16 +40,8 @@ public class UserDaoImpl implements UserDao {
 	public boolean isIdFound(Integer userId) throws SQLException {
 
 		try {
-			return jdbcTemplate.query(SqlQueries.GET_USER_BY_ID, new ResultSetExtractor<Boolean>() {
-				@Override
-				public Boolean extractData(ResultSet rs) throws SQLException, DataAccessException {
-					Integer foundedId = null;
-					while (rs.next()) {
-						foundedId = rs.getInt(UserTableDetails.USERID_COLUMN_NAME);
-					}
-					return foundedId != null;
-				}
-			}, userId);
+			String userData = jdbcTemplate.queryForObject(SqlQueries.GET_USER_BY_ID, String.class, userId);
+			return userData != null;
 		} catch (Exception e) {
 			Log4j2.getAuditlog().error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
@@ -197,23 +189,29 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public User getUserById(Integer userId) throws SQLException {
 		try {
-			String s = jdbcTemplate.queryForObject("Select getUserById(?)", String.class, userId);
+			String userData = jdbcTemplate.queryForObject(SqlQueries.GET_USER_BY_ID, String.class, userId);
 			ObjectMapper mapper = new ObjectMapper();
 			User user = null;
-
-			user = mapper.readValue(s, User.class);
-
+			user = mapper.readValue(userData, User.class);
 			return user;
-		}catch (Exception e) {
+		} catch (Exception e) {
 			Log4j2.getAuditlog().error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
 
 	@Override
-	public List<Map<String, Object>> getAllUsers() throws SQLException {
+	public List<User> getAllUsers() throws SQLException {
 		try {
-			return jdbcTemplate.queryForList(SqlQueries.GET_ALL_USERS);
+			String users = jdbcTemplate.queryForObject(SqlQueries.GET_ALL_USERS, String.class);
+			List<User> user = new ArrayList<>();
+			if (users != null) {
+				ObjectMapper mapper = new ObjectMapper();
+				user = mapper.readValue(users, new TypeReference<List<User>>() {
+				});
+				return user;
+			}
+			return user;
 		} catch (Exception e) {
 			Log4j2.getAuditlog().error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
@@ -223,11 +221,15 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public User getUserByUserName(String userName) throws SQLException {
 		try {
-			String s = jdbcTemplate.queryForObject("Select getUserByName(?)", String.class, userName);
-			ObjectMapper mapper = new ObjectMapper();
-			User user = null;
-			user = mapper.readValue(s, User.class);
-			return user;
+			String userData = jdbcTemplate.queryForObject(SqlQueries.GET_USER_BY_USERNAME, String.class, userName);
+			if(userData!=null)
+			{
+				ObjectMapper mapper = new ObjectMapper();
+				User user = null;
+				user = mapper.readValue(userData, User.class);
+				return user;
+			}
+			return null;
 		} catch (Exception e) {
 			Log4j2.getAuditlog().error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
@@ -383,35 +385,15 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public List<EndPoint> getAllEndPointDetails() throws SQLException {
 		try {
-			return jdbcTemplate.query(SqlQueries.GET_ALL_END_POINT, new ResultSetExtractor<List<EndPoint>>() {
-				@Override
-				public List<EndPoint> extractData(ResultSet rs) throws SQLException, DataAccessException {
-					List<EndPoint> allEndPoints = new ArrayList<>();
-					while (rs.next()) {
-						EndPoint endPoint = new EndPoint();
-						endPoint.setEndPointId(rs.getInt(UserTableDetails.ENDPOINTID_COLUMN_NAME));
-						endPoint.setEndPointName(rs.getString(UserTableDetails.ENDPOINTNAME_COLUMN_NAME));
-
-						List<String> privilege = jdbcTemplate.query(SqlQueries.GET_ALL_AUTHORIZATION,
-								new ResultSetExtractor<List<String>>() {
-
-									@Override
-									public List<String> extractData(ResultSet rs)
-											throws SQLException, DataAccessException {
-										List<String> privilege = new ArrayList<>();
-										while (rs.next()) {
-											privilege.add(rs.getString(UserTableDetails.PRIVILEGE_COLUMN_NAME));
-										}
-										return privilege;
-									}
-								}, endPoint.getEndPointId());
-
-						endPoint.setAuthorities(privilege);
-						allEndPoints.add(endPoint);
-					}
-					return allEndPoints;
-				}
-			});
+			String endPoints = jdbcTemplate.queryForObject(SqlQueries.GET_ALL_END_POINT, String.class);
+			List<EndPoint> listOfEndPoints = new ArrayList<>();
+			if (endPoints != null) {
+				ObjectMapper mapper = new ObjectMapper();
+				listOfEndPoints = mapper.readValue(endPoints, new TypeReference<List<EndPoint>>() {
+				});
+				return listOfEndPoints;
+			}
+			return listOfEndPoints;
 		} catch (Exception e) {
 			Log4j2.getAuditlog().error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());

@@ -83,7 +83,7 @@ public class UserController {
 	}
 
 	@GetMapping("/getalluser")
-	public ResponseEntity<List<Map<String, Object>>> getAllUser() {
+	public ResponseEntity<List<User>> getAllUser() {
 		return new ResponseEntity<>(service.getAllUser(), HttpStatus.FOUND);
 	}
 
