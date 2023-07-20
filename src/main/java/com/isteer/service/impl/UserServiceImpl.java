@@ -166,7 +166,7 @@ public class UserServiceImpl implements UserService {
 			Log4j2.getAuditlog().info(id + " " + userId + " " + successMsg.getAccountDeleted());
 			Map<String, Object> response = new HashMap<>();
 			response.put("UserId", userId);
-			response.put("StatusCode", StatusCode.ACCOUNTDELETIONFAILED.getCode());
+			response.put("StatusCode", StatusCode.SUCESSCODE.getCode());
 			response.put("Message", successMsg.getAccountDeleted());
 			return response;
 		} catch (SQLException e) {

@@ -50,8 +50,6 @@ public class SpringSecurity {
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-		httpSecurity.cors(cors -> cors.disable());
-		httpSecurity.csrf(csr -> csr.disable());
 		List<EndPoint> endPoints = dao.getAllEndPointDetails();
 		for (EndPoint endPoint : endPoints) {
 			if (endPoint.getAuthorities().contains("PermitAll")) {

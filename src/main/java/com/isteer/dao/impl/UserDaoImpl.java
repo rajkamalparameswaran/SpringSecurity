@@ -63,7 +63,12 @@ public class UserDaoImpl implements UserDao {
 				ps.setString(4, user.getUserPassword());
 				return ps;
 			}, holder);
-			return holder.getKey().intValue();
+			int key= holder.getKey().intValue();
+			if(key!=0)
+			{
+				return key;		
+			}
+			throw new SQLException("User Id Not Generated");
 		} catch (Exception e) {
 			Log4j2.getAuditlog().error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
@@ -324,7 +329,12 @@ public class UserDaoImpl implements UserDao {
 				ps.setString(1, endPoint.getEndPointName());
 				return ps;
 			}, holder);
-			return holder.getKey().intValue();
+			int key= holder.getKey().intValue();
+			if(key!=0)
+			{
+				return key;		
+			}
+			throw new SQLException("EndPoint Id Not Generated");
 		} catch (Exception e) {
 			Log4j2.getAuditlog().error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
@@ -404,7 +414,9 @@ public class UserDaoImpl implements UserDao {
 	public int toCheckDuplicateUserName(String userName, int userId) throws SQLException {
 		try {
 			return jdbcTemplate.queryForObject(SqlQueries.GET_DUBLICATE_USERNAME, Integer.class, userName, userId);
-		} catch (Exception e) {
+		} catch (DataAccessException e) {
+			return 1;
+		}catch (Exception e) {
 			Log4j2.getAuditlog().error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
@@ -414,6 +426,8 @@ public class UserDaoImpl implements UserDao {
 	public int toCheckDuplicateUserEmail(String userEmail, int userId) throws SQLException {
 		try {
 			return jdbcTemplate.queryForObject(SqlQueries.GET_DUBLICATE_EMAIL, Integer.class, userEmail, userId);
+		} catch (DataAccessException e) {
+			return 1;
 		} catch (Exception e) {
 			Log4j2.getAuditlog().error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
