@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -66,13 +67,13 @@ public class UserDaoImpl implements UserDao {
 				ps.setString(4, user.getUserPassword());
 				return ps;
 			}, holder);
-			int key= holder.getKey().intValue();
-			if(key==0)
-			{
-				throw new NullPointerException("Id Not Created");
-				
-			}
-			return key;		
+			 
+	                Number key = holder.getKey();
+	                if (key != null) {
+	                    return key.intValue(); // Return the generated key if it is not null
+	                } else {
+	                    throw new NullPointerException("User account not created. Generated key is null.");
+	                }
 		} catch (Exception e) {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
@@ -333,13 +334,12 @@ public class UserDaoImpl implements UserDao {
 				ps.setString(1, endPoint.getEndPointName());
 				return ps;
 			}, holder);
-			int key= holder.getKey().intValue();
-			if(key==0)
-			{
-				throw new NullPointerException("Id Not Created");
-					
-			}
-			return key;	
+			 Number key = holder.getKey();
+             if (key != null) {
+                 return key.intValue(); // Return the generated key if it is not null
+             } else {
+                 throw new NullPointerException("EndPoint  not created. Generated key is null.");
+             }	
 		} catch (Exception e) {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
@@ -418,10 +418,14 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public int toCheckDuplicateUserName(String userName, int userId) throws SQLException {
 		try {
-			return jdbcTemplate.queryForObject(SqlQueries.GET_DUBLICATE_USERNAME, Integer.class, userName, userId);
-		} catch (DataAccessException e) {
-			return 1;
-		}catch (Exception e) {
+			Integer result= jdbcTemplate.queryForObject(SqlQueries.GET_DUBLICATE_USERNAME, Integer.class, userName, userId);
+			if (result != null) {
+		        return result; // Return the non-null result
+		    } else {
+		        // Handle the case where the query did not find any result (null value returned)
+		        throw new EmptyResultDataAccessException(1);
+		    }
+		}catch(Exception e) {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
@@ -430,9 +434,13 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public int toCheckDuplicateUserEmail(String userEmail, int userId) throws SQLException {
 		try {
-			return jdbcTemplate.queryForObject(SqlQueries.GET_DUBLICATE_EMAIL, Integer.class, userEmail, userId);
-		} catch (DataAccessException e) {
-			return 1;
+			Integer result= jdbcTemplate.queryForObject(SqlQueries.GET_DUBLICATE_EMAIL, Integer.class, userEmail, userId);
+			if (result != null) {
+		        return result; // Return the non-null result
+		    } else {
+		        // Handle the case where the query did not find any result (null value returned)
+		        throw new EmptyResultDataAccessException(1);
+		    }
 		} catch (Exception e) {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
