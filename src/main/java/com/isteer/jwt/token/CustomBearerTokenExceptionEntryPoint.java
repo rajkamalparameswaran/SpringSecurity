@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
@@ -11,7 +13,6 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isteer.logs.Log4j2;
 import com.isteer.message.properties.FailedMessage;
 import com.isteer.statuscode.StatusCode;
 
@@ -21,6 +22,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class CustomBearerTokenExceptionEntryPoint implements AuthenticationEntryPoint {
+	
+	private static final Logger AUDITLOG=LogManager.getLogger("AuditLogs");
 
 	@Autowired 
 	private FailedMessage property;
@@ -35,6 +38,6 @@ public class CustomBearerTokenExceptionEntryPoint implements AuthenticationEntry
 		body.put("errorMsg", property.getAuthenticationFailed());
 		final ObjectMapper mapper = new ObjectMapper();
 		mapper.writeValue(response.getOutputStream(), body);
-		Log4j2.getAuditlog().info(property.getAuthenticationFailed());
+		AUDITLOG.info(property.getAuthenticationFailed());
 	}
 }

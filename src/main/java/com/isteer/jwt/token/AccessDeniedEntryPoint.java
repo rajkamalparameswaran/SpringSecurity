@@ -13,7 +13,6 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isteer.logs.Log4j2;
 import com.isteer.message.properties.FailedMessage;
 import com.isteer.statuscode.StatusCode;
 
@@ -24,7 +23,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class AccessDeniedEntryPoint implements AccessDeniedHandler {
 
-	private Logger logger=LogManager.getLogger(AccessDeniedEntryPoint.class);
+	private static final Logger AUDITLOG=LogManager.getLogger("AuditLogs");
 	
 	@Autowired 
 	FailedMessage property;
@@ -40,7 +39,6 @@ public class AccessDeniedEntryPoint implements AccessDeniedHandler {
 		body.put("errorMsg",property.getAccessDenied());
 		final ObjectMapper mapper = new ObjectMapper();
 		mapper.writeValue(response.getOutputStream(), body);
-		logger.error(property.getAccessDenied());
-		Log4j2.getAuditlog().info(property.getAccessDenied());
+		AUDITLOG.info(property.getAccessDenied());
 	}
 }

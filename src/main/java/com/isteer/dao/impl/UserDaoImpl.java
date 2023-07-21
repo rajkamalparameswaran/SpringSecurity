@@ -7,6 +7,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -20,7 +22,6 @@ import org.springframework.stereotype.Repository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isteer.dao.layer.UserDao;
-import com.isteer.logs.Log4j2;
 import com.isteer.message.properties.FailedMessage;
 import com.isteer.module.EndPoint;
 import com.isteer.module.User;
@@ -29,6 +30,8 @@ import com.isteer.table.details.UserTableDetails;
 
 @Repository
 public class UserDaoImpl implements UserDao {
+	
+	private static final Logger AUDITLOG=LogManager.getLogger("AuditLogs");
 
 	@Autowired
 	JdbcTemplate jdbcTemplate;
@@ -43,7 +46,7 @@ public class UserDaoImpl implements UserDao {
 			String userData = jdbcTemplate.queryForObject(SqlQueries.GET_USER_BY_ID, String.class, userId);
 			return userData != null;
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 
@@ -64,13 +67,14 @@ public class UserDaoImpl implements UserDao {
 				return ps;
 			}, holder);
 			int key= holder.getKey().intValue();
-			if(key!=0)
+			if(key==0)
 			{
-				return key;		
+				throw new NullPointerException("Id Not Created");
+				
 			}
-			throw new SQLException("User Id Not Generated");
+			return key;		
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -91,7 +95,7 @@ public class UserDaoImpl implements UserDao {
 				}
 			});
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -112,7 +116,7 @@ public class UserDaoImpl implements UserDao {
 				}
 			});
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -133,7 +137,7 @@ public class UserDaoImpl implements UserDao {
 				}
 			});
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -146,7 +150,7 @@ public class UserDaoImpl implements UserDao {
 					user.getUserEmail(), user.getUserPassword(), user.isAccountNonExpired(), user.isAccountNonLocked(),
 					user.isCredentialsNonExpired(), user.isEnabled(), user.getUserId());
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -156,7 +160,7 @@ public class UserDaoImpl implements UserDao {
 		try {
 			jdbcTemplate.update(SqlQueries.DELETE_USER, userId);
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -166,7 +170,7 @@ public class UserDaoImpl implements UserDao {
 		try {
 			jdbcTemplate.update(SqlQueries.DELETE_ADDRESS, userId);
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -176,7 +180,7 @@ public class UserDaoImpl implements UserDao {
 		try {
 			jdbcTemplate.update(SqlQueries.DELETE_ROLES, userId);
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -186,7 +190,7 @@ public class UserDaoImpl implements UserDao {
 		try {
 			jdbcTemplate.update(SqlQueries.DELETE_PRIVILEGES, userId);
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -200,7 +204,7 @@ public class UserDaoImpl implements UserDao {
 			user = mapper.readValue(userData, User.class);
 			return user;
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -218,7 +222,7 @@ public class UserDaoImpl implements UserDao {
 			}
 			return user;
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -236,7 +240,7 @@ public class UserDaoImpl implements UserDao {
 			}
 			return null;
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -256,7 +260,7 @@ public class UserDaoImpl implements UserDao {
 				}
 			});
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -275,7 +279,7 @@ public class UserDaoImpl implements UserDao {
 				}
 			}, userId);
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -294,7 +298,7 @@ public class UserDaoImpl implements UserDao {
 				}
 			}, userId, addressId);
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -315,7 +319,7 @@ public class UserDaoImpl implements UserDao {
 			}, addressId);
 			return address;
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -330,13 +334,14 @@ public class UserDaoImpl implements UserDao {
 				return ps;
 			}, holder);
 			int key= holder.getKey().intValue();
-			if(key!=0)
+			if(key==0)
 			{
-				return key;		
+				throw new NullPointerException("Id Not Created");
+					
 			}
-			throw new SQLException("EndPoint Id Not Generated");
+			return key;	
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -357,7 +362,7 @@ public class UserDaoImpl implements UserDao {
 				}
 			});
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -367,7 +372,7 @@ public class UserDaoImpl implements UserDao {
 		try {
 			jdbcTemplate.update(SqlQueries.DELETE_AUTHORIZATION, endPointId);
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -386,7 +391,7 @@ public class UserDaoImpl implements UserDao {
 				}
 			}, endPointId);
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 
@@ -405,7 +410,7 @@ public class UserDaoImpl implements UserDao {
 			}
 			return listOfEndPoints;
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -417,7 +422,7 @@ public class UserDaoImpl implements UserDao {
 		} catch (DataAccessException e) {
 			return 1;
 		}catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -429,7 +434,7 @@ public class UserDaoImpl implements UserDao {
 		} catch (DataAccessException e) {
 			return 1;
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -448,7 +453,7 @@ public class UserDaoImpl implements UserDao {
 				}
 			}, userId);
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}
@@ -467,7 +472,7 @@ public class UserDaoImpl implements UserDao {
 				}
 			}, userId);
 		} catch (Exception e) {
-			Log4j2.getAuditlog().error(e.getLocalizedMessage());
+			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
 	}

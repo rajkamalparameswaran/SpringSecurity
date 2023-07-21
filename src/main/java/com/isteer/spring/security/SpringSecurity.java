@@ -50,6 +50,7 @@ public class SpringSecurity {
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+		httpSecurity.csrf(csr -> csr.disable());
 		List<EndPoint> endPoints = dao.getAllEndPointDetails();
 		for (EndPoint endPoint : endPoints) {
 			if (endPoint.getAuthorities().contains("PermitAll")) {

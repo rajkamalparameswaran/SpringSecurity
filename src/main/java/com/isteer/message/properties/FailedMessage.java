@@ -27,6 +27,13 @@ public class FailedMessage {
 	private String nameOrEmailAlreadyExist;
 	private String invalidSqlQuery;
 	private String emailLengthInvalid;
+	private String noDataFound;
+	public String getNoDataFound() {
+		return noDataFound;
+	}
+	public void setNoDataFound(String noDataFound) {
+		this.noDataFound = noDataFound;
+	}
 	public String getEmailLengthInvalid() {
 		return emailLengthInvalid;
 	}

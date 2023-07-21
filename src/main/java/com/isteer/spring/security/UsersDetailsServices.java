@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,13 +16,14 @@ import org.springframework.stereotype.Service;
 import com.isteer.dao.layer.UserDao;
 import com.isteer.exception.SqlQueryException;
 import com.isteer.exception.UserIdNotFoundException;
-import com.isteer.logs.Log4j2;
 import com.isteer.message.properties.FailedMessage;
 import com.isteer.module.User;
 import com.isteer.statuscode.StatusCode;
 
 @Service
 public class UsersDetailsServices implements UserDetailsService {
+	
+	private static final Logger AUDITLOG=LogManager.getLogger("AuditLogs");
 
 	@Autowired
 	UserDao dao;
@@ -39,7 +42,7 @@ public class UsersDetailsServices implements UserDetailsService {
 		if (user == null) {
 			List<String> exception = new ArrayList<>();
 			exception.add(property.getInvalidName());
-			Log4j2.getAuditlog().info(property.getInvalidName());
+			AUDITLOG.info(property.getInvalidName());
 			throw new UserIdNotFoundException(StatusCode.USERIDNOTFOUND.getCode(),property.getProcessFailed(), exception);
 		}
 		return new Principles(user);

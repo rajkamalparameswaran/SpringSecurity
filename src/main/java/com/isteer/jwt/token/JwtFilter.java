@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,7 +17,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isteer.logs.Log4j2;
 import com.isteer.statuscode.StatusCode;
 
 import jakarta.servlet.FilterChain;
@@ -25,6 +26,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+	
+	private static final Logger AUDITLOG=LogManager.getLogger("AuditLogs");
 
 	@Autowired
 	JwtUtil util;
@@ -61,8 +64,9 @@ public class JwtFilter extends OncePerRequestFilter {
 			Map<String, Object> body = new HashMap<>();
 			body.put("StatusCode", StatusCode.USERAUTHENTICATIONFAILED.getCode());
 			body.put("Reason", e.getLocalizedMessage());
-			body.put("errorMsg", "Token Invalid");
-			Log4j2.getAuditlog().info("Token Invalid");
+			String msg="Token Invalid";
+			body.put("errorMsg",msg);
+			AUDITLOG.info(msg);
 			final ObjectMapper mapper = new ObjectMapper();
 			mapper.writeValue(response.getOutputStream(), body);
 		}

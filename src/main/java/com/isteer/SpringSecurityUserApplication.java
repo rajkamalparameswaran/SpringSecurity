@@ -1,17 +1,17 @@
 package com.isteer;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import com.isteer.logs.Log4j2;
-
 @SpringBootApplication
 public class SpringSecurityUserApplication {
-
+	private static final Logger AUDITLOG=LogManager.getLogger("AuditLogs");
 	
 	public static void main(String[] args) {
 		SpringApplication.run(SpringSecurityUserApplication.class, args);
-		Log4j2.getLogger().info("Application started sucessfully");
+		AUDITLOG.info("Application started sucessfully");
 		
 		}
 }

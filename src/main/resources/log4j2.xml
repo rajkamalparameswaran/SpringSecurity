@@ -30,12 +30,9 @@
 
 	</Appenders>
 	<Loggers>
-		<Logger name="com.isteer" level="debug" additivity="false">
-			<AppenderRef ref="Console"></AppenderRef>
-			
-		</Logger>
 		<Logger name="AuditLogs" level="debug" additivity="false">
 			<AppenderRef ref="AuditLogger"></AppenderRef>
+			<AppenderRef ref="Console"></AppenderRef>
 		</Logger>
 
 		<Root level="error">
