@@ -200,10 +200,14 @@ public class UserDaoImpl implements UserDao {
 	public User getUserById(Integer userId) throws SQLException {
 		try {
 			String userData = jdbcTemplate.queryForObject(SqlQueries.GET_USER_BY_ID, String.class, userId);
-			ObjectMapper mapper = new ObjectMapper();
-			User user = null;
-			user = mapper.readValue(userData, User.class);
-			return user;
+			if(userData!=null)
+			{
+				ObjectMapper mapper = new ObjectMapper();
+				User user = null;
+				user = mapper.readValue(userData, User.class);
+				return user;
+			}
+			return null;
 		} catch (Exception e) {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());

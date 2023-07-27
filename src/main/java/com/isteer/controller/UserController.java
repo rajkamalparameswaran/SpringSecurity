@@ -30,7 +30,6 @@ import com.isteer.module.EndPoint;
 import com.isteer.module.User;
 import com.isteer.service.impl.AddressResponse;
 import com.isteer.service.impl.AddressesResponse;
-import com.isteer.service.impl.AlternativeReturnUser;
 import com.isteer.service.impl.EndPointResponse;
 import com.isteer.service.impl.UserResponse;
 import com.isteer.services.UserService;
@@ -65,7 +64,7 @@ public class UserController {
 	}
 
 	@PutMapping("/updateUser")
-	public ResponseEntity<AlternativeReturnUser> updateUser(@RequestBody User user) {
+	public ResponseEntity<UserResponse> updateUser(@RequestBody User user) {
 
 		return new ResponseEntity<>(service.updateUser(user), HttpStatus.ACCEPTED);
 	}

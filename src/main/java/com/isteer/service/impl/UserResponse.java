@@ -1,12 +1,14 @@
 package com.isteer.service.impl;
 
+import com.isteer.module.User;
+
 public class UserResponse {
 
 	private int statusCode;
 	private String result;
-	private ReturnUser user;
+	private User user;
 
-	public UserResponse(int statusCode, String result, ReturnUser user) {
+	public UserResponse(int statusCode, String result, User user) {
 		super();
 		this.statusCode = statusCode;
 		this.result = result;
@@ -29,11 +31,11 @@ public class UserResponse {
 		this.result = result;
 	}
 
-	public ReturnUser getUser() {
+	public User getUser() {
 		return user;
 	}
 
-	public void setUser(ReturnUser user) {
+	public void setUser(User user) {
 		this.user = user;
 	}
 }

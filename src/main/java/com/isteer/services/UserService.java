@@ -7,7 +7,6 @@ import com.isteer.module.EndPoint;
 import com.isteer.module.User;
 import com.isteer.service.impl.AddressResponse;
 import com.isteer.service.impl.AddressesResponse;
-import com.isteer.service.impl.AlternativeReturnUser;
 import com.isteer.service.impl.EndPointResponse;
 import com.isteer.service.impl.UserResponse;
 
@@ -15,7 +14,7 @@ public interface UserService {
 
 	public UserResponse addUser(User user);
 
-	public AlternativeReturnUser updateUser(User user);
+	public UserResponse updateUser(User user);
 
 	public Map<String, Object> deleteUserById(Integer userId);
 

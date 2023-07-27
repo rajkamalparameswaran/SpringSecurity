@@ -71,9 +71,7 @@ public class UserServiceImpl implements UserService {
 				userDao.addRoles(user.getUserRoles(), userId);
 				userDao.addPrivileges(userId);
 				AUDITLOG.info(LOGMSG,successMsg.getAccountCreated(),userId);
-				ReturnUser returnUser = new ReturnUser(userId, user.getUserName(), user.getUserFullName(),
-						user.getUserEmail(), user.getUserPassword(), user.getUserAddresses(), user.getUserRoles());
-				return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountCreated(), returnUser);
+				return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountCreated(), userDao.getUserByUserName(user.getUserName()));
 			} catch (SQLException e) {
 				throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
 						Arrays.asList(e.getLocalizedMessage()));
@@ -91,7 +89,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public AlternativeReturnUser updateUser(User user) {
+	public UserResponse updateUser(User user) {
 		userIdFoundAndExceptionThrower(user.getUserId());
 		List<String> exceptions = new ArrayList<>();
 		if (user.getPrivileges() == null || user.getPrivileges().isEmpty()) {
@@ -108,7 +106,7 @@ public class UserServiceImpl implements UserService {
 				userDao.addRoles(user.getUserRoles(), user.getUserId());
 				userDao.addPrivileges(user.getPrivileges(), user.getUserId());
 				AUDITLOG.info(LOGMSG,successMsg.getAccountUpdated(),user.getUserId());
-				return new AlternativeReturnUser(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountUpdated(), user);
+				return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountUpdated(), userDao.getUserByUserName(user.getUserName()));
 			} catch (SQLException e) {
 				throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
 						Arrays.asList(e.getLocalizedMessage()));
@@ -150,10 +148,13 @@ public class UserServiceImpl implements UserService {
 		userIdFoundAndExceptionThrower(userId);
 		try {
 			User user = userDao.getUserById(userId);
-			ReturnUser returnUser = new ReturnUser(user.getUserId(), user.getUserName(), user.getUserFullName(),
-					user.getUserEmail(), user.getUserPassword(), user.getUserAddresses(), user.getUserRoles());
+			if(user==null) {
+				AUDITLOG.info(failedMsg.getNotValidData());
+				throw new UserIdNotFoundException(StatusCode.ACCOUNTFETCHINGFAILED.getCode(),
+						failedMsg.getDataFetchProcssFailed(), Arrays.asList(failedMsg.getNoDataFound()));
+			}
 			AUDITLOG.info(LOGMSG,successMsg.getAccountFetched(), userId);
-			return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountFetched(), returnUser);
+			return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountFetched(), user);
 		} catch (SQLException e) {
 			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
 					Arrays.asList(e.getLocalizedMessage()));
@@ -184,7 +185,7 @@ public class UserServiceImpl implements UserService {
 			if(user==null) {
 				AUDITLOG.info(failedMsg.getNotValidData());
 				throw new UserIdNotFoundException(StatusCode.ACCOUNTFETCHINGFAILED.getCode(),
-						failedMsg.getDataFetchProcssFailed(), Arrays.asList("NO DATA FOUND"));
+						failedMsg.getDataFetchProcssFailed(), Arrays.asList(failedMsg.getNoDataFound()));
 			}
 			AUDITLOG.info(LOGMSG,successMsg.getAccountFetched(),user.getUserId());
 			return user;
@@ -347,7 +348,7 @@ public class UserServiceImpl implements UserService {
 			if (endPoints.isEmpty()) {
 				AUDITLOG.info(failedMsg.getNoDataFound());
 				throw new UserIdNotFoundException(StatusCode.ACCOUNTFETCHINGFAILED.getCode(),
-						failedMsg.getDataFetchProcssFailed(), Arrays.asList("NO DATA FOUND"));
+						failedMsg.getDataFetchProcssFailed(), Arrays.asList(failedMsg.getNoDataFound()));
 			}
 			AUDITLOG.info(successMsg.getAccountFetched());
 			return endPoints;

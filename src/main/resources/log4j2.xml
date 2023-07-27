@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN">
+<Configuration status="WARN" >
+
 	<Properties>
-		<Property name="PATTERN">%p - %d - %C - [%M] - %m %n </Property>
-		<Property name="location">./target/logs</Property>
-		<Property name="auditLocation">./target/Audit
+		<Property name="PATTERN">${bundle:log:log4j2.pattern}</Property>
+		<Property name="auditLocation">${bundle:log:log4j2.auditLocation}
 		</Property>	
 	</Properties>
 	<Appenders>
@@ -12,8 +12,8 @@
 			<PatternLayout pattern="${PATTERN}" />
 		</Console>
 
-		<RollingFile name="AuditLogger" fileName="${auditLocation}/audit.log"
-			filePattern="${auditLocation}/files/audit-%d{yyyy-MM-dd-HH-SS}- %i.log">
+		<RollingFile name="AuditLogger" fileName="${auditLocation}/${bundle:log:log4j2.auditFileName}.log"
+			filePattern="${auditLocation}/files/${auditLocation}/${bundle:log:log4j2.auditFileName}-%d{yyyy-MM-dd-HH-SS}- %i.log">
 			<PatternLayout pattern="${PATTERN}" />
 			<Policies>
 				<SizeBasedTriggeringPolicy size="10MB">
@@ -30,12 +30,12 @@
 
 	</Appenders>
 	<Loggers>
-		<Logger name="AuditLogs" level="debug" additivity="false">
+		<Logger name="${bundle:log:log4j2.customLogger.Name}" level="${bundle:log:log4j2.customLogger.level}" additivity="false">
 			<AppenderRef ref="AuditLogger"></AppenderRef>
 			<AppenderRef ref="Console"></AppenderRef>
 		</Logger>
 
-		<Root level="error">
+		<Root level="${bundle:log:log4j2.rootLogger.level}">
 			<AppenderRef ref="Console"></AppenderRef>
 		</Root>
 	</Loggers>
