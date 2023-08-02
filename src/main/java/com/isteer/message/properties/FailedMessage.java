@@ -154,9 +154,4 @@ public class FailedMessage {
 	public void setInvalidName(String invalidName) {
 		this.invalidName = invalidName;
 	}
-
-	
-
-	
-
 }

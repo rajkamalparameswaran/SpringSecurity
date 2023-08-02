@@ -11,10 +11,11 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.isteer.dao.layer.UserDao;
+import com.isteer.dao.UserDao;
 import com.isteer.exception.SqlQueryException;
 import com.isteer.exception.UserIdNotFoundException;
 import com.isteer.message.properties.FailedMessage;
@@ -27,10 +28,10 @@ import com.isteer.statuscode.StatusCode;
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
-	
-	private static final Logger AUDITLOG=LogManager.getLogger("AuditLogs");
 
-	public static final String LOGMSG="{} : Id : {}";
+	private static final Logger AUDITLOG = LogManager.getLogger("AuditLogs");
+
+	public static final String LOGMSG = "{} : Id : {}";
 
 	@Autowired
 	SuccessMessage successMsg;
@@ -39,7 +40,6 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	UserDao userDao;
-
 
 	public void userIdFoundAndExceptionThrower(Integer userId) {
 		boolean idFound;
@@ -52,8 +52,8 @@ public class UserServiceImpl implements UserService {
 		if (idFound) {
 			List<String> exception = new ArrayList<>();
 			exception.add(failedMsg.getUserIdNotFound());
-			AUDITLOG.info(LOGMSG,failedMsg.getUserIdNotFound(),userId);
-			throw new UserIdNotFoundException(StatusCode.USERIDNOTFOUND.getCode(), failedMsg.getUserUpdationFailed(),
+			AUDITLOG.info(LOGMSG, failedMsg.getUserIdNotFound(), userId);
+			throw new UserIdNotFoundException(StatusCode.USERIDNOTFOUND.getCode(), failedMsg.getUserIdNotFound(),
 					exception);
 		}
 	}
@@ -70,8 +70,9 @@ public class UserServiceImpl implements UserService {
 				userDao.addAddresses(user.getUserAddresses(), userId);
 				userDao.addRoles(user.getUserRoles(), userId);
 				userDao.addPrivileges(userId);
-				AUDITLOG.info(LOGMSG,successMsg.getAccountCreated(),userId);
-				return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountCreated(), userDao.getUserByUserName(user.getUserName()));
+				AUDITLOG.info(LOGMSG, successMsg.getAccountCreated(), userId);
+				return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountCreated(),
+						userDao.getUserByUserName(user.getUserName()));
 			} catch (SQLException e) {
 				throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
 						Arrays.asList(e.getLocalizedMessage()));
@@ -89,37 +90,61 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserResponse updateUser(User user) {
+	public UserResponse updateUser(User user, String loggedUser, boolean isAdmin) {
 		userIdFoundAndExceptionThrower(user.getUserId());
-		List<String> exceptions = new ArrayList<>();
-		if (user.getPrivileges() == null || user.getPrivileges().isEmpty()) {
-			exceptions.add(failedMsg.getEmptyPrivilege() + "Give no privilege");
-		}
-		exceptions.addAll(getErrorList(user));
-		if (exceptions.isEmpty()) {
-			try {
-				userDao.deleteRolesById(user.getUserId());
-				userDao.deleteAddressById(user.getUserId());
-				userDao.deletePrivilegesById(user.getUserId());
-				userDao.updateUser(user);
-				userDao.addAddresses(user.getUserAddresses(), user.getUserId());
-				userDao.addRoles(user.getUserRoles(), user.getUserId());
-				userDao.addPrivileges(user.getPrivileges(), user.getUserId());
-				AUDITLOG.info(LOGMSG,successMsg.getAccountUpdated(),user.getUserId());
-				return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountUpdated(), userDao.getUserByUserName(user.getUserName()));
-			} catch (SQLException e) {
-				throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
-						Arrays.asList(e.getLocalizedMessage()));
-			} catch (Exception e) {
-				exceptions.add(e.getMessage());
-				AUDITLOG.error(LOGMSG,e.getMessage(),user.getUserId());
-				throw new SqlQueryException(StatusCode.ACCOUNTUPDATEDFAILED.getCode(),
-						failedMsg.getUserUpdationFailed(), exceptions);
+		try {
+			if (userDao.toCheckDuplicateUserName(user.getUserName(), user.getUserId()) != 0
+					|| userDao.toCheckDuplicateUserEmail(user.getUserEmail(), user.getUserId()) != 0) {
+				throw new SQLException(failedMsg.getNameOrEmailAlreadyExist());
 			}
-		} else {
-			AUDITLOG.error(LOGMSG,failedMsg.getNotValidData(),user.getUserId());
+			User tempUser = userDao.getUserById(user.getUserId());
+			if (isAdmin) {
+				userDao.updateUserByAdmin(user);
+				updateListOfAddress(user.getUserAddresses(), user.getUserId());
+				updateListOfRoles(user.getUserRoles(), user.getUserId());
+				updateListOfPrivileges(user.getPrivileges(), user.getUserId());
+				AUDITLOG.info(LOGMSG, successMsg.getAccountUpdated(), user.getUserId());
+				return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountUpdated(),
+						userDao.getUserById(user.getUserId()));
+			} else {
+				if (tempUser.getUserName().equals(loggedUser)) {
+					userDao.updateUserByUser(user);
+					updateListOfAddress(user.getUserAddresses(), user.getUserId());
+					AUDITLOG.info(LOGMSG, successMsg.getAccountUpdated(), user.getUserId());
+					return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountUpdated(),
+							userDao.getUserById(user.getUserId()));
+				} else {
+					throw new AccessDeniedException("You Cannot Update that User Details");
+				}
+			}
+		} catch (SQLException e) {
+			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
+					Arrays.asList(e.getLocalizedMessage()));
+		} catch (Exception e) {
+			AUDITLOG.error(LOGMSG, e.getMessage(), user.getUserId());
 			throw new SqlQueryException(StatusCode.ACCOUNTUPDATEDFAILED.getCode(), failedMsg.getUserUpdationFailed(),
-					exceptions);
+					Arrays.asList(e.getLocalizedMessage()));
+		}
+	}
+
+	public void updateListOfAddress(List<String> addresses, int userId) throws SQLException {
+		if (addresses != null) {
+			userDao.deleteAddressById(userId);
+			userDao.addAddresses(addresses, userId);
+		}
+	}
+
+	public void updateListOfRoles(List<String> roles, int userId) throws SQLException {
+		if (roles != null) {
+			userDao.deleteRolesById(userId);
+			userDao.addRoles(roles, userId);
+		}
+	}
+
+	public void updateListOfPrivileges(List<String> privileges, int userId) throws SQLException {
+		if (privileges != null) {
+			userDao.deletePrivilegesById(userId);
+			userDao.addPrivileges(privileges, userId);
 		}
 	}
 
@@ -131,7 +156,7 @@ public class UserServiceImpl implements UserService {
 			userDao.deleteAddressById(userId);
 			userDao.deletePrivilegesById(userId);
 			userDao.deleteUserById(userId);
-			AUDITLOG.info(LOGMSG,successMsg.getAccountDeleted(),userId);
+			AUDITLOG.info(LOGMSG, successMsg.getAccountDeleted(), userId);
 			Map<String, Object> response = new HashMap<>();
 			response.put("UserId", userId);
 			response.put("StatusCode", StatusCode.SUCESSCODE.getCode());
@@ -148,12 +173,12 @@ public class UserServiceImpl implements UserService {
 		userIdFoundAndExceptionThrower(userId);
 		try {
 			User user = userDao.getUserById(userId);
-			if(user==null) {
+			if (user == null) {
 				AUDITLOG.info(failedMsg.getNotValidData());
-				throw new UserIdNotFoundException(StatusCode.ACCOUNTFETCHINGFAILED.getCode(),
+				throw new UserIdNotFoundException(StatusCode.USERIDNOTFOUND.getCode(),
 						failedMsg.getDataFetchProcssFailed(), Arrays.asList(failedMsg.getNoDataFound()));
 			}
-			AUDITLOG.info(LOGMSG,successMsg.getAccountFetched(), userId);
+			AUDITLOG.info(LOGMSG, successMsg.getAccountFetched(), userId);
 			return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountFetched(), user);
 		} catch (SQLException e) {
 			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
@@ -182,12 +207,12 @@ public class UserServiceImpl implements UserService {
 	public User getUserByUserName(String userName) {
 		try {
 			User user = userDao.getUserByUserName(userName);
-			if(user==null) {
+			if (user == null) {
 				AUDITLOG.info(failedMsg.getNotValidData());
-				throw new UserIdNotFoundException(StatusCode.ACCOUNTFETCHINGFAILED.getCode(),
-						failedMsg.getDataFetchProcssFailed(), Arrays.asList(failedMsg.getNoDataFound()));
+				throw new UserIdNotFoundException(StatusCode.USERIDNOTFOUND.getCode(),
+						failedMsg.getDataFetchProcssFailed(), Arrays.asList(failedMsg.getInvalidName()));
 			}
-			AUDITLOG.info(LOGMSG,successMsg.getAccountFetched(),user.getUserId());
+			AUDITLOG.info(LOGMSG, successMsg.getAccountFetched(), user.getUserId());
 			return user;
 		} catch (SQLException e) {
 			AUDITLOG.error(e.getLocalizedMessage());
@@ -203,14 +228,14 @@ public class UserServiceImpl implements UserService {
 		try {
 			userDao.deletePrivilegesById(user.getUserId());
 			userDao.addPrivileges(user.getPrivileges(), user.getUserId());
-			String message = MessageFormat.format("Permission provited to the userId :{0}", user.getUserId());
+			String message = MessageFormat.format("Permission provided to the userId :{0}", user.getUserId());
 			AUDITLOG.info(message);
 			return message;
 		} catch (SQLException e) {
 			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
 					Arrays.asList(e.getLocalizedMessage()));
 		} catch (Exception e) {
-			AUDITLOG.error(LOGMSG,e.getLocalizedMessage(),user.getUserId());
+			AUDITLOG.error(LOGMSG, e.getLocalizedMessage(), user.getUserId());
 			throw new SqlQueryException(StatusCode.ACCOUNTCREATEDFAILED.getCode(), failedMsg.getProcessFailed(),
 					Arrays.asList(e.getMessage()));
 		}
@@ -222,14 +247,14 @@ public class UserServiceImpl implements UserService {
 		userIdFoundAndExceptionThrower(userId);
 		try {
 			List<String> addresses = userDao.getAddressByUserId(userId);
-			AUDITLOG.info(LOGMSG,successMsg.getAccountFetched(),userId);
+			AUDITLOG.info(LOGMSG, successMsg.getAccountFetched(), userId);
 			return new AddressesResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountFetched(), addresses);
 		} catch (SQLException e) {
 			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
 					Arrays.asList(e.getLocalizedMessage()));
 		} catch (Exception e) {
 			exception.add(e.getMessage());
-			AUDITLOG.error(LOGMSG, e.getLocalizedMessage(),userId);
+			AUDITLOG.error(LOGMSG, e.getLocalizedMessage(), userId);
 			throw new SqlQueryException(StatusCode.ACCOUNTFETCHINGFAILED.getCode(),
 					failedMsg.getDataFetchProcssFailed(), exception);
 		}
@@ -254,7 +279,7 @@ public class UserServiceImpl implements UserService {
 		try {
 			String address = userDao.getAddressByUserIdAndAddressId(userId, addressId);
 			if (address == null) {
-				String msg="userId and address id not match";
+				String msg = "userId and address id not match";
 				exception.add(msg);
 				AUDITLOG.info(msg);
 				throw new UserIdNotFoundException(StatusCode.ACCOUNTFETCHINGFAILED.getCode(),
@@ -282,7 +307,7 @@ public class UserServiceImpl implements UserService {
 				Integer endPointId = userDao.addEndPoint(endPoint);
 				endPoint.setEndPointId(endPointId);
 				userDao.addAuthorization(endPoint.getAuthorities(), endPointId);
-				AUDITLOG.info(LOGMSG,successMsg.getEndPointAdded(),endPointId);
+				AUDITLOG.info(LOGMSG, successMsg.getEndPointAdded(), endPointId);
 				return new EndPointResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getEndPointAdded(), endPoint);
 			} catch (SQLException e) {
 				throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
@@ -312,7 +337,7 @@ public class UserServiceImpl implements UserService {
 		endPoint.setEndPointName(endPointName);
 		if (endPointName == null) {
 			exception.add(failedMsg.getUserIdNotFound());
-			AUDITLOG.info(LOGMSG, failedMsg.getUserIdNotFound(),endPoint.getEndPointId());
+			AUDITLOG.info(LOGMSG, failedMsg.getUserIdNotFound(), endPoint.getEndPointId());
 			throw new UserIdNotFoundException(StatusCode.USERIDNOTFOUND.getCode(), failedMsg.getProcessFailed(),
 					exception);
 		}
@@ -320,14 +345,14 @@ public class UserServiceImpl implements UserService {
 			exception.add(failedMsg.getNotValidData());
 		}
 		if (!exception.isEmpty()) {
-			AUDITLOG.info(LOGMSG, failedMsg.getNotValidData(),endPoint.getEndPointId());
+			AUDITLOG.info(LOGMSG, failedMsg.getNotValidData(), endPoint.getEndPointId());
 			throw new SqlQueryException(StatusCode.ENDPOINTACESSUPDATEDFAILED.getCode(),
 					failedMsg.getUserUpdationFailed(), exception);
 		}
 		try {
 			userDao.deleteAuthorization(endPoint.getEndPointId());
 			userDao.addAuthorization(endPoint.getAuthorities(), endPoint.getEndPointId());
-			AUDITLOG.info(LOGMSG, successMsg.getAccountUpdated(),endPoint.getEndPointId());
+			AUDITLOG.info(LOGMSG, successMsg.getAccountUpdated(), endPoint.getEndPointId());
 			return new EndPointResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountUpdated(), endPoint);
 		} catch (SQLException e) {
 			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
@@ -388,6 +413,21 @@ public class UserServiceImpl implements UserService {
 			}
 		}
 		return exceptions;
+	}
+
+	@Override
+	public void addValidToken(String jwt, String issuedTime, String expiredTime) throws SQLException {
+			userDao.addValidToken(jwt, issuedTime, expiredTime);
+	}
+
+	@Override
+	public void deleteValidToken(String jwt) {
+		try {
+			userDao.deleteValidToken(jwt);
+		} catch (Exception e) {
+			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
+					Arrays.asList(e.getLocalizedMessage()));
+		}		
 	}
 
 }

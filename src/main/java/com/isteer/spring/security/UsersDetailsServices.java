@@ -13,7 +13,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.isteer.dao.layer.UserDao;
+import com.isteer.dao.UserDao;
 import com.isteer.exception.SqlQueryException;
 import com.isteer.exception.UserIdNotFoundException;
 import com.isteer.message.properties.FailedMessage;

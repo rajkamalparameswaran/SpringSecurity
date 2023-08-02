@@ -17,7 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.isteer.dao.layer.UserDao;
+import com.isteer.dao.UserDao;
 import com.isteer.jwt.token.AccessDeniedEntryPoint;
 import com.isteer.jwt.token.CustomBearerTokenExceptionEntryPoint;
 import com.isteer.jwt.token.JwtFilter;
@@ -62,6 +62,7 @@ public class SpringSecurity {
 						request -> request.requestMatchers(endPoint.getEndPointName()).hasAnyAuthority(authority));
 			}
 		}
+		httpSecurity.authorizeHttpRequests(request -> request.requestMatchers("/logOut").authenticated());
 		httpSecurity
 		.exceptionHandling(exp -> exp.authenticationEntryPoint(customBearerTokenExceptionEntryPoint)
 				.accessDeniedHandler(accessDeniedEntryPoint))

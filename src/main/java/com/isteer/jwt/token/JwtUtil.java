@@ -24,7 +24,7 @@ public class JwtUtil {
 
 	private String createNewToken(Map<String, Object> claims, String subject) {
 		return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 5))
 				.signWith(SignatureAlgorithm.HS256, secretKey).compact();
 	}
 
@@ -34,6 +34,10 @@ public class JwtUtil {
 
 	public Date extractExpiration(String token) {
 		return extractClaims(token, Claims::getExpiration);
+	}
+
+	public Date extractIssuedAt(String token) {
+		return extractClaims(token, Claims::getIssuedAt);
 	}
 
 	public <T> T extractClaims(String token, Function<Claims, T> claimResolver) {

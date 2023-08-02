@@ -12,6 +12,13 @@ public class SuccessMessage {
 	private String accountDeleted;
 	private String accountFetched;
 	private String endPointAdded;
+	private String loginSucess;
+	public String getLoginSucess() {
+		return loginSucess;
+	}
+	public void setLoginSucess(String loginSucess) {
+		this.loginSucess = loginSucess;
+	}
 	public String getAccountCreated() {
 		return accountCreated;
 	}
@@ -42,5 +49,4 @@ public class SuccessMessage {
 	public void setEndPointAdded(String endPointAdded) {
 		this.endPointAdded = endPointAdded;
 	}
-
 }

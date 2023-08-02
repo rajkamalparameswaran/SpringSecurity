@@ -5,16 +5,16 @@ import java.util.List;
 public class UserError {
 
 	private int statusCode;
-	private String reason;
-	private List<String> errorMsg;
+	private String errorMsg;
+	private List<String> reasons;
 	public UserError() {
 		super();
 	}
 	public UserError(int statusCode, String reason, List<String> errorMsg) {
 		super();
 		this.statusCode = statusCode;
-		this.reason = reason;
-		this.errorMsg = errorMsg;
+		this.errorMsg = reason;
+		this.reasons = errorMsg;
 	}
 	public int getStatusCode() {
 		return statusCode;
@@ -22,16 +22,16 @@ public class UserError {
 	public void setStatusCode(int statusCode) {
 		this.statusCode = statusCode;
 	}
-	public String getReason() {
-		return reason;
-	}
-	public void setReason(String reason) {
-		this.reason = reason;
-	}
-	public List<String> getErrorMsg() {
+	public String getErrorMsg() {
 		return errorMsg;
 	}
-	public void setErrorMsg(List<String> errorMsg) {
-		this.errorMsg = errorMsg;
+	public void setErrorMsg(String reason) {
+		this.errorMsg = reason;
+	}
+	public List<String> getReasons() {
+		return reasons;
+	}
+	public void setReasons(List<String> errorMsg) {
+		this.reasons = errorMsg;
 	}
 }

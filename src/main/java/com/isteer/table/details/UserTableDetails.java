@@ -16,6 +16,7 @@ public class UserTableDetails {
 	public static final String ISACCOUNTNONLOCKED_COLUMN_NAME="ISACCOUNTNONLOCKED";
 	public static final String ISCREDENTIALSNONEXPIRED_COLUMN_NAME="ISCREDENTIALSNONEXPIRED";
 	public static final String ISENABLED_COLUMN_NAME="ISENABLED";
+	public static final String PLACEHOLDER="=?, ";
 	
 	//ADDRESS TABLE
 	public static final String ADDRESS_COLUMN_NAME="ADDRESS";

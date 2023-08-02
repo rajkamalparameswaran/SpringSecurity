@@ -7,12 +7,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class SpringSecurityUserApplication {
-	private static final Logger AUDITLOG=LogManager.getLogger("AuditLogs");
-	
+	private static final Logger AUDITLOG = LogManager.getLogger("AuditLogs");
+
 	public static void main(String[] args) {
-		SpringApplication.run(SpringSecurityUserApplication.class, args);   
+		SpringApplication.run(SpringSecurityUserApplication.class, args);
 		AUDITLOG.info("Application started sucessfully");
-		
-		
-		}
+	}
 }

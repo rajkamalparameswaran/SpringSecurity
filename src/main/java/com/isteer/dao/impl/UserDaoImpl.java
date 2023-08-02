@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Repository;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isteer.dao.layer.UserDao;
+import com.isteer.dao.UserDao;
 import com.isteer.message.properties.FailedMessage;
 import com.isteer.module.EndPoint;
 import com.isteer.module.User;
@@ -31,8 +32,8 @@ import com.isteer.table.details.UserTableDetails;
 
 @Repository
 public class UserDaoImpl implements UserDao {
-	
-	private static final Logger AUDITLOG=LogManager.getLogger("AuditLogs");
+
+	private static final Logger AUDITLOG = LogManager.getLogger("AuditLogs");
 
 	@Autowired
 	JdbcTemplate jdbcTemplate;
@@ -42,7 +43,6 @@ public class UserDaoImpl implements UserDao {
 
 	@Override
 	public boolean isIdFound(Integer userId) throws SQLException {
-
 		try {
 			String userData = jdbcTemplate.queryForObject(SqlQueries.GET_USER_BY_ID, String.class, userId);
 			return userData != null;
@@ -50,12 +50,10 @@ public class UserDaoImpl implements UserDao {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
-
 	}
 
 	@Override
 	public Integer addUser(User user) throws SQLException {
-
 		try {
 			KeyHolder holder = new GeneratedKeyHolder();
 			user.setUserPassword(new BCryptPasswordEncoder().encode(user.getUserPassword()));
@@ -67,13 +65,12 @@ public class UserDaoImpl implements UserDao {
 				ps.setString(4, user.getUserPassword());
 				return ps;
 			}, holder);
-			 
-	                Number key = holder.getKey();
-	                if (key != null) {
-	                    return key.intValue(); // Return the generated key if it is not null
-	                } else {
-	                    throw new NullPointerException("User account not created. Generated key is null.");
-	                }
+			Number key = holder.getKey();
+			if (key != null) {
+				return key.intValue(); // Return the generated key if it is not null
+			} else {
+				throw new NullPointerException("User account not created. Generated key is null.");
+			}
 		} catch (Exception e) {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
@@ -143,17 +140,61 @@ public class UserDaoImpl implements UserDao {
 		}
 	}
 
-	@Override
-	public void updateUser(User user) throws SQLException {
-		try {
-			user.setUserPassword(new BCryptPasswordEncoder().encode(user.getUserPassword()));
-			jdbcTemplate.update(SqlQueries.UPDATE_USER_BY_ADMIN, user.getUserName(), user.getUserFullName(),
-					user.getUserEmail(), user.getUserPassword(), user.isAccountNonExpired(), user.isAccountNonLocked(),
-					user.isCredentialsNonExpired(), user.isEnabled(), user.getUserId());
-		} catch (Exception e) {
-			AUDITLOG.error(e.getLocalizedMessage());
-			throw new SQLException(e.getLocalizedMessage());
+	public List<Object> commonUserUpdateQuery(User user) {
+		StringBuilder sqlQueryBuilder = new StringBuilder("UPDATE USER SET ");
+		List<Object> params = new ArrayList<>();
+		if (user.getUserName() != null) {
+			sqlQueryBuilder.append(UserTableDetails.USERNAME_COLUMN_NAME);
+			sqlQueryBuilder.append(UserTableDetails.PLACEHOLDER);
+			params.add(user.getUserName());
 		}
+		if (user.getUserFullName() != null) {
+			sqlQueryBuilder.append(UserTableDetails.USERFULLNAME_COLUMN_NAME);
+			sqlQueryBuilder.append(UserTableDetails.PLACEHOLDER);
+			params.add(user.getUserFullName());
+		}
+		if (user.getUserEmail() != null) {
+			sqlQueryBuilder.append(UserTableDetails.USEREMAIL_COLUMN_NAME);
+			sqlQueryBuilder.append(UserTableDetails.PLACEHOLDER);
+			params.add(user.getUserEmail());
+		}
+		if (user.getUserPassword() != null) {
+			sqlQueryBuilder.append(UserTableDetails.USERPASSWORD_COLUMN_NAME);
+			sqlQueryBuilder.append(UserTableDetails.PLACEHOLDER);
+			user.setUserPassword(new BCryptPasswordEncoder().encode(user.getUserPassword()));
+			params.add(user.getUserPassword());
+		}
+		List<Object> queryAndParam = new ArrayList<>();
+		queryAndParam.add(sqlQueryBuilder);
+		queryAndParam.add(params);
+		return queryAndParam;
+	}
+
+	@Override
+	public void updateUserByUser(User user) throws SQLException {
+		List<Object> queryAndParams = commonUserUpdateQuery(user);
+		List<Object> params = (List<Object>) queryAndParams.get(1);
+		if (!params.isEmpty()) {
+			StringBuilder sqlBuilder = (StringBuilder) queryAndParams.get(0);
+			sqlBuilder.delete(sqlBuilder.length() - 2, sqlBuilder.length());
+			sqlBuilder.append(" WHERE USERID = ?");
+			params.add(user.getUserId());
+			String sql = sqlBuilder.toString();
+			jdbcTemplate.update(sql, params.toArray());
+		}
+	}
+
+	@Override
+	public void updateUserByAdmin(User user) throws SQLException {
+		List<Object> queryAndParams = commonUserUpdateQuery(user);
+		List<Object> params = (List<Object>) queryAndParams.get(1);
+		StringBuilder sqlBuilder = (StringBuilder) queryAndParams.get(0);
+		sqlBuilder.append(SqlQueries.UPDATE_USER_BY_ADMIN);
+		params.addAll(Arrays.asList(user.isAccountNonExpired(), user.isAccountNonLocked(),
+				user.isCredentialsNonExpired(), user.isEnabled()));
+		params.add(user.getUserId());
+		String sql = sqlBuilder.toString();
+		jdbcTemplate.update(sql, params.toArray());
 	}
 
 	@Override
@@ -200,11 +241,11 @@ public class UserDaoImpl implements UserDao {
 	public User getUserById(Integer userId) throws SQLException {
 		try {
 			String userData = jdbcTemplate.queryForObject(SqlQueries.GET_USER_BY_ID, String.class, userId);
-			if(userData!=null)
-			{
+			if (userData != null) {
 				ObjectMapper mapper = new ObjectMapper();
 				User user = null;
 				user = mapper.readValue(userData, User.class);
+				user.setUserPassword(null);
 				return user;
 			}
 			return null;
@@ -223,8 +264,10 @@ public class UserDaoImpl implements UserDao {
 				ObjectMapper mapper = new ObjectMapper();
 				user = mapper.readValue(users, new TypeReference<List<User>>() {
 				});
+				user.stream().forEach(t -> t.setUserPassword(null));
 				return user;
 			}
+			user.stream().forEach(t -> t.setUserPassword(null));
 			return user;
 		} catch (Exception e) {
 			AUDITLOG.error(e.getLocalizedMessage());
@@ -236,8 +279,7 @@ public class UserDaoImpl implements UserDao {
 	public User getUserByUserName(String userName) throws SQLException {
 		try {
 			String userData = jdbcTemplate.queryForObject(SqlQueries.GET_USER_BY_USERNAME, String.class, userName);
-			if(userData!=null)
-			{
+			if (userData != null) {
 				ObjectMapper mapper = new ObjectMapper();
 				User user = null;
 				user = mapper.readValue(userData, User.class);
@@ -338,12 +380,12 @@ public class UserDaoImpl implements UserDao {
 				ps.setString(1, endPoint.getEndPointName());
 				return ps;
 			}, holder);
-			 Number key = holder.getKey();
-             if (key != null) {
-                 return key.intValue(); // Return the generated key if it is not null
-             } else {
-                 throw new NullPointerException("EndPoint  not created. Generated key is null.");
-             }	
+			Number key = holder.getKey();
+			if (key != null) {
+				return key.intValue(); // Return the generated key if it is not null
+			} else {
+				throw new NullPointerException("EndPoint  not created. Generated key is null.");
+			}
 		} catch (Exception e) {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
@@ -422,14 +464,15 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public int toCheckDuplicateUserName(String userName, int userId) throws SQLException {
 		try {
-			Integer result= jdbcTemplate.queryForObject(SqlQueries.GET_DUBLICATE_USERNAME, Integer.class, userName, userId);
+			Integer result = jdbcTemplate.queryForObject(SqlQueries.GET_DUBLICATE_USERNAME, Integer.class, userName,
+					userId);
 			if (result != null) {
-		        return result; // Return the non-null result
-		    } else {
-		        // Handle the case where the query did not find any result (null value returned)
-		        throw new EmptyResultDataAccessException(1);
-		    }
-		}catch(Exception e) {
+				return result; // Return the non-null result
+			} else {
+				// Handle the case where the query did not find any result (null value returned)
+				throw new EmptyResultDataAccessException(1);
+			}
+		} catch (Exception e) {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
 		}
@@ -438,13 +481,14 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public int toCheckDuplicateUserEmail(String userEmail, int userId) throws SQLException {
 		try {
-			Integer result= jdbcTemplate.queryForObject(SqlQueries.GET_DUBLICATE_EMAIL, Integer.class, userEmail, userId);
+			Integer result = jdbcTemplate.queryForObject(SqlQueries.GET_DUBLICATE_EMAIL, Integer.class, userEmail,
+					userId);
 			if (result != null) {
-		        return result; // Return the non-null result
-		    } else {
-		        // Handle the case where the query did not find any result (null value returned)
-		        throw new EmptyResultDataAccessException(1);
-		    }
+				return result; // Return the non-null result
+			} else {
+				// Handle the case where the query did not find any result (null value returned)
+				throw new EmptyResultDataAccessException(1);
+			}
 		} catch (Exception e) {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());
@@ -483,6 +527,36 @@ public class UserDaoImpl implements UserDao {
 					return authoritie;
 				}
 			}, userId);
+		} catch (Exception e) {
+			AUDITLOG.error(e.getLocalizedMessage());
+			throw new SQLException(e.getLocalizedMessage());
+		}
+	}
+
+	@Override
+	public void addValidToken(String jwt, String issuedTime, String expiredTime) throws SQLException {
+		try {
+			jdbcTemplate.update(SqlQueries.ADD_VALID_TOKEN, jwt, issuedTime, expiredTime);
+		} catch (Exception e) {
+			AUDITLOG.error(e.getLocalizedMessage());
+			throw new SQLException(e.getLocalizedMessage());
+		}
+	}
+
+	@Override
+	public boolean tokenIsValid(String jwt) {
+		try {
+			jdbcTemplate.queryForObject(SqlQueries.TOKEN_IS_VALID, String.class, jwt);
+			return true;
+		} catch (DataAccessException accessException) {
+			return false;
+		}
+	}
+
+	@Override
+	public void deleteValidToken(String jwt) throws SQLException {
+		try {
+			jdbcTemplate.update(SqlQueries.DELET_VALID_TOKEN, jwt);
 		} catch (Exception e) {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SQLException(e.getLocalizedMessage());

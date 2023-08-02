@@ -1,5 +1,6 @@
 package com.isteer.services;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +15,7 @@ public interface UserService {
 
 	public UserResponse addUser(User user);
 
-	public UserResponse updateUser(User user);
+	public UserResponse updateUser(User user, String loggedUser, boolean isAdmin);
 
 	public Map<String, Object> deleteUserById(Integer userId);
 
@@ -35,5 +36,9 @@ public interface UserService {
 	public EndPointResponse updateEndPointAccess(EndPoint endPoint);
 
 	public List<EndPoint> getAllEndPointDetails();
+	
+	public void addValidToken(String jwt, String issuedTime, String expiredTime) throws SQLException;
+	
+	public void deleteValidToken(String jwt) throws SQLException;
 
 }

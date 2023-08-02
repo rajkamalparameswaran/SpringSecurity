@@ -17,8 +17,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isteer.dao.UserDao;
 import com.isteer.statuscode.StatusCode;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,20 +28,22 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
-	
-	private static final Logger AUDITLOG=LogManager.getLogger("AuditLogs");
+
+	private static final Logger AUDITLOG = LogManager.getLogger("AuditLogs");
 
 	@Autowired
-	JwtUtil util;
+	private JwtUtil util;
 
 	@Autowired
-	UserDetailsService userDetailsService;
-	
+	private UserDetailsService userDetailsService;
+
+	@Autowired
+	private UserDao userDao;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-		
+
 		try {
 			String authRequest = request.getHeader("Authorization");
 			String userName = null;
@@ -47,6 +51,9 @@ public class JwtFilter extends OncePerRequestFilter {
 			if (authRequest != null && authRequest.startsWith("Bearer")) {
 				jwtToken = authRequest.substring(7);
 				userName = util.extractName(jwtToken);
+			}
+			if (jwtToken != null && !userDao.tokenIsValid(jwtToken)) {
+				throw new JwtException("Token Expired You Need To Login");
 			}
 			if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 				UserDetails userDetails = userDetailsService.loadUserByUsername(userName);
@@ -64,8 +71,8 @@ public class JwtFilter extends OncePerRequestFilter {
 			Map<String, Object> body = new HashMap<>();
 			body.put("StatusCode", StatusCode.USERAUTHENTICATIONFAILED.getCode());
 			body.put("Reason", e.getLocalizedMessage());
-			String msg="Token Invalid";
-			body.put("errorMsg",msg);
+			String msg = "Token Invalid";
+			body.put("errorMsg", msg);
 			AUDITLOG.info(msg);
 			final ObjectMapper mapper = new ObjectMapper();
 			mapper.writeValue(response.getOutputStream(), body);

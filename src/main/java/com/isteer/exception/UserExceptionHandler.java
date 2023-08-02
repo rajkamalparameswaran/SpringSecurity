@@ -16,14 +16,14 @@ public class UserExceptionHandler {
 	@ExceptionHandler(value = { UserIdNotFoundException.class })
 	public ResponseEntity<UserError> userIdNOtFoundException(UserIdNotFoundException idNotFoundException) {
 		UserError userException = new UserError(idNotFoundException.getStatusCode(),
-				idNotFoundException.getReason(), idNotFoundException.getException());
+				idNotFoundException.getErrorMsg(), idNotFoundException.getException());
 		return new ResponseEntity<>(userException, HttpStatus.NOT_FOUND);
 	}
 
 	@ExceptionHandler(value = { SqlQueryException.class })
 	public ResponseEntity<UserError> sqlQueryExcepton(SqlQueryException queryException) {
-		UserError userException = new UserError(queryException.getStatusCode(), queryException.getReason(),
-				queryException.getErrorMsg());
+		UserError userException = new UserError(queryException.getStatusCode(), queryException.getErrorMsg(),
+				queryException.getReasons());
 		return new ResponseEntity<>(userException, HttpStatus.BAD_REQUEST);
 	}
 

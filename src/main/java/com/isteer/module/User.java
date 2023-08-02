@@ -139,13 +139,4 @@ public class User implements Serializable {
 	public void setEnabled(boolean isEnabled) {
 		this.isEnabled = isEnabled;
 	}
-
-	@Override
-	public String toString() {
-		return "User [userId=" + userId + ", userName=" + userName + ", userFullName=" + userFullName + ", userEmail="
-				+ userEmail + ", userPassword=" + userPassword + ", userAddresses=" + userAddresses + ", userRoles="
-				+ userRoles + ", privileges=" + privileges + ", isAccountNonExpired=" + isAccountNonExpired
-				+ ", isAccountNonLocked=" + isAccountNonLocked + ", isCredentialsNonExpired=" + isCredentialsNonExpired
-				+ ", isEnabled=" + isEnabled + "]";
-	}
 }

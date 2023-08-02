@@ -1,4 +1,4 @@
-package com.isteer.dao.layer;
+package com.isteer.dao;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -19,7 +19,9 @@ public interface UserDao {
 
 	public void addPrivileges(Integer userId) throws SQLException;
 
-	public void updateUser(User user) throws SQLException;
+	public void updateUserByUser(User user) throws SQLException;
+	
+	public void updateUserByAdmin(User user) throws SQLException;
 
 	public void deleteUserById(Integer userId) throws SQLException;
 
@@ -58,4 +60,10 @@ public interface UserDao {
 	public int toCheckDuplicateUserName(String userName, int userId) throws SQLException;
 
 	public int toCheckDuplicateUserEmail(String userEmail, int userId) throws SQLException;
+	
+	public void addValidToken(String jwt,String issuedTime,String expiredTime) throws SQLException;
+	
+	public boolean tokenIsValid(String jwt);
+	
+	public void deleteValidToken(String jwt) throws SQLException;
 }
