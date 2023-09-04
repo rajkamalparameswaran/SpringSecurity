@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,25 +24,26 @@ import com.isteer.jwt.token.CustomBearerTokenExceptionEntryPoint;
 import com.isteer.jwt.token.JwtFilter;
 import com.isteer.module.EndPoint;
 
+
 @Configuration
 @EnableWebSecurity
 public class SpringSecurity {
-	
-	private final UserDetailsService userDetailsService;
-    private final JwtFilter jwtFilter;
-    private final CustomBearerTokenExceptionEntryPoint customBearerTokenExceptionEntryPoint;
-    private final AccessDeniedEntryPoint accessDeniedEntryPoint;
-    private final UserDao dao;
 
-    public SpringSecurity(UserDetailsService userDetailsService, JwtFilter jwtFilter,
-                          CustomBearerTokenExceptionEntryPoint customBearerTokenExceptionEntryPoint,
-                          AccessDeniedEntryPoint accessDeniedEntryPoint, UserDao dao) {
-        this.userDetailsService = userDetailsService;
-        this.jwtFilter = jwtFilter;
-        this.customBearerTokenExceptionEntryPoint = customBearerTokenExceptionEntryPoint;
-        this.accessDeniedEntryPoint = accessDeniedEntryPoint;
-        this.dao = dao;
-    }
+	private final UserDetailsService userDetailsService;
+	private final JwtFilter jwtFilter;
+	private final CustomBearerTokenExceptionEntryPoint customBearerTokenExceptionEntryPoint;
+	private final AccessDeniedEntryPoint accessDeniedEntryPoint;
+	private final UserDao dao;
+
+	public SpringSecurity(UserDetailsService userDetailsService, JwtFilter jwtFilter,
+			CustomBearerTokenExceptionEntryPoint customBearerTokenExceptionEntryPoint,
+			AccessDeniedEntryPoint accessDeniedEntryPoint, UserDao dao) {
+		this.userDetailsService = userDetailsService;
+		this.jwtFilter = jwtFilter;
+		this.customBearerTokenExceptionEntryPoint = customBearerTokenExceptionEntryPoint;
+		this.accessDeniedEntryPoint = accessDeniedEntryPoint;
+		this.dao = dao;
+	}
 
 	@Bean
 	public PasswordEncoder bCryptPasswordEncoder() {
@@ -51,9 +53,10 @@ public class SpringSecurity {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
 		httpSecurity.csrf(csr -> csr.disable());
+		httpSecurity.cors(Customizer.withDefaults()); 
 		List<EndPoint> endPoints = dao.getAllEndPointDetails();
 		for (EndPoint endPoint : endPoints) {
-			if (endPoint.getAuthorities().contains("PermitAll")) {
+			if (endPoint.getAuthorities().contains("PERMITALL")) {
 				httpSecurity.authorizeHttpRequests(
 						request -> request.requestMatchers(endPoint.getEndPointName()).permitAll());
 			} else {
@@ -62,11 +65,11 @@ public class SpringSecurity {
 						request -> request.requestMatchers(endPoint.getEndPointName()).hasAnyAuthority(authority));
 			}
 		}
-		httpSecurity.authorizeHttpRequests(request -> request.requestMatchers("/logOut").authenticated());
+		httpSecurity.authorizeHttpRequests(request -> request.anyRequest().permitAll());
 		httpSecurity
-		.exceptionHandling(exp -> exp.authenticationEntryPoint(customBearerTokenExceptionEntryPoint)
-				.accessDeniedHandler(accessDeniedEntryPoint))
-		.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+				.exceptionHandling(exp -> exp.authenticationEntryPoint(customBearerTokenExceptionEntryPoint)
+						.accessDeniedHandler(accessDeniedEntryPoint))
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 		httpSecurity.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 		return httpSecurity.build();
 	}

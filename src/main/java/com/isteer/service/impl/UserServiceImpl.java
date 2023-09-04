@@ -1,5 +1,6 @@
 package com.isteer.service.impl;
 
+import java.security.Principal;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +42,13 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	UserDao userDao;
+
+	@Autowired
+	Principal principal;
+
+	String getTempAuthorityValue() {
+		return SecurityContextHolder.getContext().getAuthentication().toString();
+	}
 
 	public void userIdFoundAndExceptionThrower(Integer userId) {
 		boolean idFound;
@@ -90,7 +99,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserResponse updateUser(User user, String loggedUser, boolean isAdmin) {
+	public UserResponse updateUser(User user) {
 		userIdFoundAndExceptionThrower(user.getUserId());
 		try {
 			if (userDao.toCheckDuplicateUserName(user.getUserName(), user.getUserId()) != 0
@@ -98,7 +107,9 @@ public class UserServiceImpl implements UserService {
 				throw new SQLException(failedMsg.getNameOrEmailAlreadyExist());
 			}
 			User tempUser = userDao.getUserById(user.getUserId());
-			if (isAdmin) {
+
+			if ((getTempAuthorityValue().contains("ADMIN") || getTempAuthorityValue().contains("UPDATE"))) {
+
 				userDao.updateUserByAdmin(user);
 				updateListOfAddress(user.getUserAddresses(), user.getUserId());
 				updateListOfRoles(user.getUserRoles(), user.getUserId());
@@ -107,7 +118,7 @@ public class UserServiceImpl implements UserService {
 				return new UserResponse(StatusCode.SUCESSCODE.getCode(), successMsg.getAccountUpdated(),
 						userDao.getUserById(user.getUserId()));
 			} else {
-				if (tempUser.getUserName().equals(loggedUser)) {
+				if (tempUser.getUserName().equals(principal.getName())) {
 					userDao.updateUserByUser(user);
 					updateListOfAddress(user.getUserAddresses(), user.getUserId());
 					AUDITLOG.info(LOGMSG, successMsg.getAccountUpdated(), user.getUserId());
@@ -152,16 +163,21 @@ public class UserServiceImpl implements UserService {
 	public Map<String, Object> deleteUserById(Integer userId) {
 		userIdFoundAndExceptionThrower(userId);
 		try {
-			userDao.deleteRolesById(userId);
-			userDao.deleteAddressById(userId);
-			userDao.deletePrivilegesById(userId);
-			userDao.deleteUserById(userId);
-			AUDITLOG.info(LOGMSG, successMsg.getAccountDeleted(), userId);
-			Map<String, Object> response = new HashMap<>();
-			response.put("UserId", userId);
-			response.put("StatusCode", StatusCode.SUCESSCODE.getCode());
-			response.put("Message", successMsg.getAccountDeleted());
-			return response;
+			if ((userDao.getUserById(userId).getUserName().equalsIgnoreCase(principal.getName())
+					|| (getTempAuthorityValue().contains("ADMIN")) || (getTempAuthorityValue().contains("DELETE")))) {
+
+				userDao.deleteRolesById(userId);
+				userDao.deleteAddressById(userId);
+				userDao.deletePrivilegesById(userId);
+				userDao.deleteUserById(userId);
+				AUDITLOG.info(LOGMSG, successMsg.getAccountDeleted(), userId);
+				Map<String, Object> response = new HashMap<>();
+				response.put("UserId", userId);
+				response.put("StatusCode", StatusCode.SUCESSCODE.getCode());
+				response.put("Message", successMsg.getAccountDeleted());
+				return response;
+			}
+			throw new AccessDeniedException("You Dont Have Access to this page");
 		} catch (SQLException e) {
 			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
 					Arrays.asList(e.getLocalizedMessage()));
@@ -170,6 +186,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserResponse getUserById(Integer userId) {
+
 		userIdFoundAndExceptionThrower(userId);
 		try {
 			User user = userDao.getUserById(userId);
@@ -205,15 +222,21 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public User getUserByUserName(String userName) {
+
 		try {
-			User user = userDao.getUserByUserName(userName);
-			if (user == null) {
-				AUDITLOG.info(failedMsg.getNotValidData());
-				throw new UserIdNotFoundException(StatusCode.USERIDNOTFOUND.getCode(),
-						failedMsg.getDataFetchProcssFailed(), Arrays.asList(failedMsg.getInvalidName()));
+			if (principal.getName().equalsIgnoreCase(userName) || (getTempAuthorityValue().contains("ADMIN"))
+					|| (getTempAuthorityValue().contains("FETCH"))) {
+
+				User user = userDao.getUserByUserName(userName);
+				if (user == null) {
+					AUDITLOG.info(failedMsg.getNotValidData());
+					throw new UserIdNotFoundException(StatusCode.USERIDNOTFOUND.getCode(),
+							failedMsg.getDataFetchProcssFailed(), Arrays.asList(failedMsg.getInvalidName()));
+				}
+				AUDITLOG.info(LOGMSG, successMsg.getAccountFetched(), user.getUserId());
+				return user;
 			}
-			AUDITLOG.info(LOGMSG, successMsg.getAccountFetched(), user.getUserId());
-			return user;
+			throw new AccessDeniedException("You dont have access to this page");
 		} catch (SQLException e) {
 			AUDITLOG.error(e.getLocalizedMessage());
 			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
@@ -417,7 +440,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public void addValidToken(String jwt, String issuedTime, String expiredTime) throws SQLException {
-			userDao.addValidToken(jwt, issuedTime, expiredTime);
+		userDao.addValidToken(jwt, issuedTime, expiredTime);
 	}
 
 	@Override
@@ -427,7 +450,38 @@ public class UserServiceImpl implements UserService {
 		} catch (Exception e) {
 			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
 					Arrays.asList(e.getLocalizedMessage()));
-		}		
+		}
+	}
+
+	@Override
+	public String getCurrentUser() {
+		return principal.getName();
+	}
+
+	@Override
+	public boolean validEmail(String email, int userId) {
+		try {
+			if (userDao.toCheckDuplicateUserEmail(email, userId) != 0) {
+				return false;
+			}
+			return true;
+		} catch (SQLException e) {
+			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
+					Arrays.asList(e.getLocalizedMessage()));
+		}
+	}
+
+	@Override
+	public boolean validUserName(String userName, int userId) {
+		try {
+			if (userDao.toCheckDuplicateUserName(userName, userId) != 0) {
+				return false;
+			}
+			return true;
+		} catch (SQLException e) {
+			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
+					Arrays.asList(e.getLocalizedMessage()));
+		}
 	}
 
 }

@@ -21,6 +21,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,6 +50,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
+@CrossOrigin
 public class UserController {
 
 	@Autowired
@@ -87,10 +89,8 @@ public class UserController {
 	// In order to access the API we need provide Bearer token
 
 	@PutMapping("/updateUser")
-	public ResponseEntity<UserResponse> updateUser(@RequestBody User user, Principal principal) {
-		return new ResponseEntity<>(
-				service.updateUser(user, principal.getName(), principal.toString().contains("ADMIN")),
-				HttpStatus.ACCEPTED);
+	public ResponseEntity<UserResponse> updateUser(@RequestBody User user) {
+		return new ResponseEntity<>(service.updateUser(user), HttpStatus.ACCEPTED);
 	}
 
 	// This API provide permission to particular user
@@ -105,7 +105,7 @@ public class UserController {
 	// This API is used to delete the particular user based on Id
 	// In order to access the API we need provide Bearer token
 
-	@DeleteMapping("/deleteuserbyid/{userId}")
+	@DeleteMapping("/deleteUserById/{userId}")
 	public ResponseEntity<Map<String, Object>> updateUser(@PathVariable Integer userId) {
 		return new ResponseEntity<>(service.deleteUserById(userId), HttpStatus.OK);
 	}
@@ -113,7 +113,7 @@ public class UserController {
 	// This API is used to get particular user data based on userId
 	// In order to access the API we need provide Bearer token
 
-	@GetMapping("/getuserbyid/{userId}")
+	@GetMapping("/getUserById/{userId}")
 	public ResponseEntity<UserResponse> getUserById(@PathVariable Integer userId) {
 		return new ResponseEntity<>(service.getUserById(userId), HttpStatus.FOUND);
 	}
@@ -121,7 +121,7 @@ public class UserController {
 	// This API is used to get All the user
 	// In order to access the API we need provide Bearer token
 
-	@GetMapping("/getalluser")
+	@GetMapping("/getAllUsers")
 	public ResponseEntity<List<User>> getAllUser() {
 		return new ResponseEntity<>(service.getAllUser(), HttpStatus.FOUND);
 	}
@@ -129,8 +129,8 @@ public class UserController {
 	// This API is used to get particular user data based on userName
 	// In order to access the API we need provide Bearer token
 
-	@GetMapping("/getuserbyname/{userName}")
-	public ResponseEntity<User> getUserByName(@PathVariable String userName) {
+	@GetMapping("/getUserByName/{userName}")
+	public ResponseEntity<User> getUserByName(@PathVariable String userName,Principal principal) {
 		return new ResponseEntity<>(service.getUserByUserName(userName), HttpStatus.FOUND);
 	}
 
@@ -160,13 +160,13 @@ public class UserController {
 		}
 	}
 
-	@GetMapping("/getaddressbyuserId/{userId}")
+	@GetMapping("/getAddressByUserId/{userId}")
 	public ResponseEntity<AddressesResponse> getGetAddressById(@PathVariable Integer userId) {
 		return new ResponseEntity<>(service.getAddressByUserId(userId), HttpStatus.FOUND);
 
 	}
 
-	@GetMapping("/getaddressbyuserIdandaddressId/{userId}/{addressId}")
+	@GetMapping("/getAddressByUserIdAndAddressId/{userId}/{addressId}")
 	public ResponseEntity<AddressResponse> getGetAddressById(@PathVariable Integer userId,
 			@PathVariable Integer addressId) {
 		return new ResponseEntity<>(service.getAddressByUserIdAndAddressId(userId, addressId), HttpStatus.FOUND);
@@ -175,7 +175,7 @@ public class UserController {
 	// This API is used to add a new API in DB
 	// In order to access the API we need provide Bearer token
 
-	@PostMapping("/addnewendpoint")
+	@PostMapping("/addNewEndPoint")
 	public ResponseEntity<EndPointResponse> addNewEndPoint(@RequestBody EndPoint endPoint) {
 		return new ResponseEntity<>(service.addNewEndPoint(endPoint), HttpStatus.CREATED);
 	}
@@ -184,7 +184,7 @@ public class UserController {
 	// In order to access the API we need provide Bearer token
 	// we need to provide valid data(endPointId,authorities)
 
-	@PutMapping("/updateendpointbyendpointid")
+	@PutMapping("/updateEndPointByEndPointId")
 	public ResponseEntity<EndPointResponse> updateEndPointByEndPointId(@RequestBody EndPoint endPoint) {
 		return new ResponseEntity<>(service.updateEndPointAccess(endPoint), HttpStatus.OK);
 	}
@@ -205,7 +205,7 @@ public class UserController {
 			service.deleteValidToken(jwt);
 			Map<String, Object> body = new HashMap<>();
 			body.put("StatusCode", 1);
-			body.put("Msg", "Logout Sucessfully");
+			body.put("Msg", "LogoutSucessfully");
 			return new ResponseEntity<>(body, HttpStatus.OK);
 		} catch (SQLException e) {
 			throw new SqlQueryException(StatusCode.SQLEXCEPTIONCODE.getCode(), failedMsg.getInvalidSqlQuery(),
@@ -217,6 +217,21 @@ public class UserController {
 		LocalDateTime localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		return localDateTime.format(dateTimeFormatter);
+	}
+
+	@GetMapping("/getCurrentUser")
+	public ResponseEntity<String> getCurrentUser() {
+		return new ResponseEntity<>(service.getCurrentUser(), HttpStatus.OK);
+	}
+
+	@GetMapping("/validEmail/{userId}/{email}")
+	public ResponseEntity<Boolean> validEmail(@PathVariable int userId,@PathVariable String email){
+		return new ResponseEntity<>(service.validEmail(email, userId),HttpStatus.OK);
+	}
+
+	@GetMapping("/validUser/{userId}/{userName}")
+	public ResponseEntity<Boolean> validUserName(@PathVariable int userId,@PathVariable String userName){
+		return new ResponseEntity<>(service.validUserName(userName, userId),HttpStatus.OK);
 	}
 
 }

@@ -20,15 +20,16 @@ public class SqlQueries {
 
 	public static final String DELETE_ROLES = "DELETE FROM AUTHORITY WHERE FK_AUTHORITY_USERID=?";
 
-	public static final String GET_USER_BY_ID = "SELECT GETUSERBYID(?)";
+	public static final String GET_USER_BY_ID = "call getUserById(?)";
 
 	public static final String GET_ADDRESS_BY_ID = "SELECT ADDRESS FROM ADDRESS WHERE FK_ADDRESS_USERID=?";
 
 	public static final String GET_ROLES_BY_ID = "SELECT ROLE FROM AUTHORITY WHERE FK_AUTHORITY_USERID=?";
 
-	public static final String GET_ALL_USERS = "SELECT GETALLUSER()";
+	public static final String GET_ALL_USERS = "call getAllUser()";
 
-	public static final String GET_USER_BY_USERNAME = "SELECT GETUSERBYNAME(?)";
+	public static final String GET_USER_BY_USERNAME = "call getUserByName(?)"
+			+ "";
 
 	public static final String INSERT_PRIVILEGES = "INSERT INTO PRIVILEGES(FK_PRIVILEGES_USERID,PRIVILEGE) VALUES(?,?)";
 
@@ -52,7 +53,7 @@ public class SqlQueries {
 
 	public static final String END_POINT_ID_FOUNDER = "SELECT ENDPOINTNAME FROM ENDPOINTS WHERE ENDPOINTID=?";
 
-	public static final String GET_ALL_END_POINT = "SELECT GETALLENDPOINTS()";
+	public static final String GET_ALL_END_POINT = "call GETALLPOINTS()";
 
 	public static final String GET_ALL_AUTHORIZATION = "SELECT PRIVILEGE FROM AUTHORIZATION WHERE FK_AUTHORIZATION_ENDPOINTSID=?";
 

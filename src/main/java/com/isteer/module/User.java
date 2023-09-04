@@ -2,6 +2,7 @@ package com.isteer.module;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 public class User implements Serializable {
 
@@ -138,5 +139,28 @@ public class User implements Serializable {
 
 	public void setEnabled(boolean isEnabled) {
 		this.isEnabled = isEnabled;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(isAccountNonExpired, isAccountNonLocked, isCredentialsNonExpired, isEnabled, privileges,
+				userAddresses, userEmail, userFullName, userId, userName, userPassword, userRoles);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		User other = (User) obj;
+		return isAccountNonExpired == other.isAccountNonExpired && isAccountNonLocked == other.isAccountNonLocked
+				&& isCredentialsNonExpired == other.isCredentialsNonExpired && isEnabled == other.isEnabled
+				&& Objects.equals(privileges, other.privileges) && Objects.equals(userAddresses, other.userAddresses)
+				&& Objects.equals(userEmail, other.userEmail) && Objects.equals(userFullName, other.userFullName)
+				&& Objects.equals(userName, other.userName) && Objects.equals(userPassword, other.userPassword)
+				&& Objects.equals(userRoles, other.userRoles);
 	}
 }

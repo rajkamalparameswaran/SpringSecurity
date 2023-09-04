@@ -14,8 +14,10 @@ import com.isteer.service.impl.UserResponse;
 public interface UserService {
 
 	public UserResponse addUser(User user);
+	
+	public List<String> getErrorList(User user);
 
-	public UserResponse updateUser(User user, String loggedUser, boolean isAdmin);
+	public UserResponse updateUser(User user);
 
 	public Map<String, Object> deleteUserById(Integer userId);
 
@@ -40,5 +42,11 @@ public interface UserService {
 	public void addValidToken(String jwt, String issuedTime, String expiredTime) throws SQLException;
 	
 	public void deleteValidToken(String jwt) throws SQLException;
+	
+	public String getCurrentUser();
+	
+	public boolean validEmail(String email,int userId);
+	
+	public boolean validUserName(String userName,int userId);
 
 }
