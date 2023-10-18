@@ -31,6 +31,9 @@ import com.isteer.service.impl.UserResponse;
 import com.isteer.services.UserService;
 import com.isteer.statuscode.StatusCode;
 
+
+// Spring Test Cases
+
 @SpringBootTest
 class SpringSecurityUserApplicationTests {
 
